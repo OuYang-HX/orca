@@ -28,21 +28,26 @@ class TerminalHwKeysModule : Module() {
     // Why: consumption and encoding must agree exactly, so a claimed key is
     // never swallowed without bytes reaching the shell.
     @JvmStatic
-    fun isMappedKeyEvent(event: KeyEvent): Boolean = bytesForKey(event) != null
+    fun isMappedKeyEvent(event: KeyEvent): Boolean =
+      bytesFor(event.keyCode, event.isCtrlPressed, event.isAltPressed, event.isShiftPressed) != null
 
     @JvmStatic
-    fun bytesForKey(event: KeyEvent): String? {
-      val ctrl = event.isCtrlPressed
-      val alt = event.isAltPressed
-      val shift = event.isShiftPressed
+    fun bytesForKey(event: KeyEvent): String? =
+      bytesFor(event.keyCode, event.isCtrlPressed, event.isAltPressed, event.isShiftPressed)
+
+    // Why pure: the encoding table is the regression-prone core (it must match
+    // xterm expectations), so it takes primitives and stays JVM-unit-testable.
+    @JvmStatic
+    fun bytesFor(keyCode: Int, ctrl: Boolean, alt: Boolean, shift: Boolean): String? {
       fun arrow(suffix: Char): String = when {
         ctrl && shift -> "\u001b[1;6$suffix"
         ctrl -> "\u001b[1;5$suffix"
-        alt -> "\u001b\u001b$suffix"
+        // Why CSI modifier form: xterm.js (the embedded engine) encodes
+        // Alt+arrows as 1;3, and the remote must see the same bytes.
+        alt -> "\u001b[1;3$suffix"
         shift -> "\u001b[1;2$suffix"
         else -> "\u001b[$suffix"
       }
-      val keyCode = event.keyCode
       // Why: plain letters must keep composing text in the live input field;
       // only modifier combinations leave the field for the shell.
       if (keyCode in KeyEvent.KEYCODE_A..KeyEvent.KEYCODE_Z) {
