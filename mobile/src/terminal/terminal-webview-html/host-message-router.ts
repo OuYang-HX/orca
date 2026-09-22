@@ -120,6 +120,9 @@ export const TERMINAL_HTML_HOST_MESSAGE_ROUTER = `  ${TERMINAL_REFLOW_JS}
     }
     if (msg.type === 'ping') {
       notify({ type: 'pong', pingId: msg.id });
+    } else if (msg.type === 'focus-terminal') {
+      setTerminalHardwareKeysEnabled(true);
+      try { term.focus(); } catch (e) {}
     } else if (msg.type === 'init') {
       init(msg.cols, msg.rows, msg.initialData, msg.terminalTheme, msg.fontScale, msg.preserveScroll, msg.oscLinks);
     } else if (msg.type === 'set-font-scale') {

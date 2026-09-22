@@ -1,5 +1,6 @@
 import { colors } from '../../theme/mobile-theme'
 import { XTERM_ENGINE_CSS, XTERM_ENGINE_JS } from '../terminal-webview-engine.generated'
+import { SYMBOLS_NERD_FONT_B64 } from './nerd-font-data'
 
 export const TERMINAL_HTML_DOCUMENT_SHELL = `<!DOCTYPE html>
 <html>
@@ -14,6 +15,7 @@ window.onerror = function(msg) {
   if (window.__engineErrors.length < 20) window.__engineErrors.push(String(msg));
 };
 </script>
+<style>${SYMBOLS_NERD_FONT_B64 ? `@font-face { font-family: 'Symbols Nerd Font Mono'; src: url(data:font/ttf;base64,${SYMBOLS_NERD_FONT_B64}) format('truetype'); font-display: block; }` : ''}</style>
 <style>${XTERM_ENGINE_CSS}</style>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }

@@ -26,3 +26,7 @@ export type TerminalWebViewCommand =
   | { type: 'cancel-select'; id?: number }
   | { type: 'do-select-all'; id?: number }
   | { type: 'set-theme'; id?: number; terminalTheme?: RuntimeMobileTerminalTheme }
+  // Why: Android hardware keys never reach TextInput.onKeyPress (native EditText
+  // consumes arrows/escape), so hardware-keyboard mode focuses xterm itself —
+  // xterm encodes the escape sequences and reports them as terminal-input bytes.
+  | { type: 'focus-terminal'; id?: number }

@@ -52,9 +52,9 @@ describe('mobile terminal query replies', () => {
     expect(notifyIndex).toBeGreaterThan(listenerIndex)
     expect(XTERM_WEBVIEW_SOURCE.html).toContain('disableStdin: false')
     expect(XTERM_WEBVIEW_SOURCE.html).toContain(
-      'term.attachCustomKeyEventHandler(function() { return false; })'
+      'term.attachCustomKeyEventHandler(function() { return terminalHardwareKeysEnabled; })'
     )
-    expect(XTERM_WEBVIEW_SOURCE.html).toContain('term.textarea.readOnly = true')
+    expect(XTERM_WEBVIEW_SOURCE.html).toContain('term.textarea.readOnly = !terminalHardwareKeysEnabled')
   })
 
   it('mutes a replacement terminal until its own replay drains', () => {

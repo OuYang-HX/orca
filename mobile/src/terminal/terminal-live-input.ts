@@ -215,6 +215,19 @@ export function clearTerminalLiveInputFocusTimer(timerRef: TerminalLiveInputFocu
   timerRef.current = null
 }
 
+const TERMINAL_LIVE_INPUT_SUPPRESSED_BLUR_WINDOW_MS = 250
+let terminalLiveInputSuppressedBlurUntil = 0
+
+export function beginTerminalLiveInputSuppressedBlur(): void {
+  // Why: app-driven dismissals (hide-keyboard, post-send, mode toggle) must not
+  // be undone by the capture field's refocus-on-blur; natural blurs still refocus.
+  terminalLiveInputSuppressedBlurUntil = Date.now() + TERMINAL_LIVE_INPUT_SUPPRESSED_BLUR_WINDOW_MS
+}
+
+export function isTerminalLiveInputBlurSuppressed(): boolean {
+  return Date.now() < terminalLiveInputSuppressedBlurUntil
+}
+
 export function scheduleTerminalLiveInputFocus(
   timerRef: TerminalLiveInputFocusTimerRef,
   focus: () => void,
