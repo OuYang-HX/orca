@@ -1,10 +1,15 @@
-import { useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { Platform, type Keyboard, type TextInput } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import type { RpcClient } from '../transport/rpc-client'
 import type { ConnectionState } from '../transport/types'
 import type { TerminalModes, TerminalWebViewHandle } from '../terminal/terminal-webview-contract'
 import { useTerminalLiveInputFocus } from '../terminal/use-terminal-live-input-focus'
+import { scheduleTerminalLiveInputFocus } from '../terminal/terminal-live-input'
+import {
+  addTerminalHardwareKeyListener,
+  setTerminalHardwareKeysEnabled
+} from '../terminal/terminal-hardware-keys'
 import type { TerminalLiveInputSender } from '../terminal/terminal-live-input-sender'
 import { useTerminalLiveInputCommit } from '../terminal/use-terminal-live-input-commit'
 import { resolveMobileTerminalInputGate } from '../terminal/terminal-input-connection-gate'
@@ -134,7 +139,29 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
   const canCompose = inputGate.canCompose
   const canSend = inputGate.canSend && clientId !== null
   const liveInputEnabled = activeHandle ? liveInputTerminalHandles.has(activeHandle) : false
-  const { focusLiveInput, handleTerminalTap, resetLiveInputFocus } = useTerminalLiveInputFocus({
+  // Why: Android native EditText consumes arrow/escape hardware keys before
+  // onKeyPress sees them; MainActivity forwards those keys here instead.
+  useEffect(() => {
+    setTerminalHardwareKeysEnabled(
+      Platform.OS === 'android' && liveInputEnabled && canSend && activeHandle !== null
+    )
+  }, [activeHandle, canSend, liveInputEnabled])
+  useEffect(() => {
+    return addTerminalHardwareKeyListener((bytes) => {
+      const handle = activeHandleRef.current
+      if (
+        !handle ||
+        connStateRef.current !== 'connected' ||
+        !liveInputTerminalHandlesRef.current.has(handle)
+      ) {
+        return
+      }
+      void sendLiveTerminalInputRef.current(handle, bytes)
+    })
+    // Why: the subscription lifetime matches the session route, not reactive values.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  const { focusLiveInput, handleCaptureBlur, handleTerminalTap, resetLiveInputFocus } = useTerminalLiveInputFocus({
     activeHandleRef,
     canSend,
     inputRef: liveInputRef,
@@ -151,6 +178,21 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
       return resetLiveInputFocus
     }, [resetLiveInputFocus])
   )
+  // Why: hardware-keyboard users expect the capture field to stay focused when
+  // they switch terminal tabs; only re-focus when the keyboard is already up so
+  // touch phones never get an unprompted keyboard on tab activation.
+  const previousFocusHandleRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (
+      activeHandle !== previousFocusHandleRef.current &&
+      keyboardHeight > 0 &&
+      liveInputEnabled &&
+      canSend
+    ) {
+      scheduleTerminalLiveInputFocus(liveInputFocusTimerRef, () => liveInputRef.current?.focus())
+    }
+    previousFocusHandleRef.current = activeHandle
+  }, [activeHandle, canSend, keyboardHeight, liveInputEnabled, liveInputFocusTimerRef, liveInputRef])
   return {
     ptyModesRef,
     terminalGestureInputBucketsRef,
@@ -209,6 +251,7 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
     canSend,
     liveInputEnabled,
     focusLiveInput,
+    handleCaptureBlur,
     handleTerminalTap,
     resetLiveInputFocus,
     terminalInventoryRecoveryScope,

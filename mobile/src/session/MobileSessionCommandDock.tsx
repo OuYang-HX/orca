@@ -44,6 +44,7 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
     canCompose,
     liveInputEnabled,
     focusLiveInput,
+    handleCaptureBlur,
     showNativeChat,
     dictation,
     cancelDictation,
@@ -293,6 +294,7 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
               style={styles.liveInputCapture}
               value={liveInputCapture}
               onChange={handleLiveInputChange}
+              onBlur={handleCaptureBlur}
               onKeyPress={handleLiveInputKeyPress}
               onSubmitEditing={submitLiveInput}
               placeholder=""

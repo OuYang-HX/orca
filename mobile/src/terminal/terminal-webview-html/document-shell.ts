@@ -1,5 +1,6 @@
 import { TERMINAL_DOCUMENT_MARKUP } from './document-markup'
 import { TERMINAL_DOCUMENT_STYLE } from './document-style'
+import { SYMBOLS_NERD_FONT_B64 } from './nerd-font-data'
 import { XTERM_ENGINE_CSS } from '../terminal-webview-engine-css.generated'
 import { XTERM_ENGINE_JS } from '../terminal-webview-engine.generated'
 
@@ -16,6 +17,7 @@ window.onerror = function(msg) {
   if (window.__engineErrors.length < 20) window.__engineErrors.push(String(msg));
 };
 </script>
+<style>${SYMBOLS_NERD_FONT_B64 ? `@font-face { font-family: 'Symbols Nerd Font Mono'; src: url(data:font/ttf;base64,${SYMBOLS_NERD_FONT_B64}) format('truetype'); font-display: block; }` : ''}</style>
 <style>${XTERM_ENGINE_CSS}</style>
 <style>
 ${TERMINAL_DOCUMENT_STYLE}
