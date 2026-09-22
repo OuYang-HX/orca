@@ -2,6 +2,7 @@ import { reportWorkerTerminalUserInput } from '../terminal/worker-terminal-takeo
 import { useCallback } from 'react'
 import { terminalBufferClear, terminalInputSend } from '../terminal/mobile-terminal-operations'
 import {
+  beginTerminalLiveInputSuppressedBlur,
   clearTerminalLiveInputFocusTimer,
   scheduleTerminalLiveInputFocus
 } from '../terminal/terminal-live-input'
@@ -54,6 +55,7 @@ export function useMobileSessionTerminalInput(scope: MobileSessionFileActionsMod
     if (nextEnabled) {
       scheduleTerminalLiveInputFocus(liveInputFocusTimerRef, () => liveInputRef.current?.focus())
     } else {
+      beginTerminalLiveInputSuppressedBlur()
       clearTerminalLiveInputFocusTimer(liveInputFocusTimerRef)
       liveInputRef.current?.blur()
     }

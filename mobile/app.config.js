@@ -17,16 +17,18 @@ module.exports = ({ config }) => ({
     ...config.ios,
     entitlements: { ...config.ios?.entitlements, 'aps-environment': APS_ENVIRONMENT }
   },
-  plugins: (config.plugins ?? []).map((plugin) =>
-    plugin === 'expo-notifications'
-      ? [
-          'expo-notifications',
-          {
-            enableBackgroundRemoteNotifications: true,
-            mode: APS_ENVIRONMENT,
-            icon: './assets/notification-icon.png'
-          }
-        ]
-      : plugin
-  )
+  plugins: (config.plugins ?? [])
+    .map((plugin) =>
+      plugin === 'expo-notifications'
+        ? [
+            'expo-notifications',
+            {
+              enableBackgroundRemoteNotifications: true,
+              mode: APS_ENVIRONMENT,
+              icon: './assets/notification-icon.png'
+            }
+          ]
+        : plugin
+    )
+    .concat(['./plugins/with-terminal-hwkeys'])
 })
