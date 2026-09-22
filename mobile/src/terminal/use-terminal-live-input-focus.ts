@@ -1,4 +1,5 @@
 import { useCallback, useLayoutEffect, useRef, type RefObject } from 'react'
+import { Platform } from 'react-native'
 import {
   beginTerminalLiveInputSuppressedBlur,
   clearTerminalLiveInputFocusTimer,
@@ -14,11 +15,6 @@ type TerminalLiveInputFocusContext = {
   readonly keyboardHeight: number
   readonly liveInputEnabled: boolean
   readonly reopenFocusedInputWhenKeyboardHidden: boolean
-  // Why: Android hardware keys dispatch to the focused Android view — native
-  // EditText consumes arrows/escape before onKeyPress can see them, so direct
-  // input must focus the WebView's xterm instead of the RN capture field.
-  readonly androidWebviewFocus?: boolean
-  readonly focusTerminalWebview?: () => void
 }
 
 type UseTerminalLiveInputFocusOptions<T extends TerminalLiveInputFocusTarget> =
@@ -46,35 +42,22 @@ export function useTerminalLiveInputFocus<T extends TerminalLiveInputFocusTarget
   lifecycleKey,
   reopenFocusedInputWhenKeyboardHidden,
   liveInputEnabled,
-  androidWebviewFocus,
-  focusTerminalWebview,
   timerRef
 }: UseTerminalLiveInputFocusOptions<T>): TerminalLiveInputFocusHandlers {
   const contextRef = useRef<TerminalLiveInputFocusContext>({
     canSend,
     keyboardHeight,
     liveInputEnabled,
-    reopenFocusedInputWhenKeyboardHidden,
-    androidWebviewFocus,
-    focusTerminalWebview
+    reopenFocusedInputWhenKeyboardHidden
   })
   useLayoutEffect(() => {
     contextRef.current = {
       canSend,
       keyboardHeight,
       liveInputEnabled,
-      reopenFocusedInputWhenKeyboardHidden,
-      androidWebviewFocus,
-      focusTerminalWebview
+      reopenFocusedInputWhenKeyboardHidden
     }
-  }, [
-    canSend,
-    keyboardHeight,
-    liveInputEnabled,
-    reopenFocusedInputWhenKeyboardHidden,
-    androidWebviewFocus,
-    focusTerminalWebview
-  ])
+  }, [canSend, keyboardHeight, liveInputEnabled, reopenFocusedInputWhenKeyboardHidden])
 
   const resetLiveInputFocus = useCallback(() => {
     beginTerminalLiveInputSuppressedBlur()
@@ -82,10 +65,13 @@ export function useTerminalLiveInputFocus<T extends TerminalLiveInputFocusTarget
     inputRef.current?.blur()
   }, [inputRef, timerRef])
 
-  // Why: hardware-keyboard sessions lose the capture focus on any stray tap
-  // elsewhere; refocusing on natural blurs keeps direct typing alive. Blurs
-  // from app-driven dismissals are suppressed at their call sites.
+  // Why: the blur-refocus keeps Android hardware-keyboard typing alive across
+  // stray taps. On iOS a refocus re-opens the soft keyboard the user just
+  // swiped away, so the refocus never runs there.
   const handleCaptureBlur = useCallback(() => {
+    if (Platform.OS !== 'android') {
+      return
+    }
     if (isTerminalLiveInputBlurSuppressed()) {
       return
     }
@@ -101,10 +87,6 @@ export function useTerminalLiveInputFocus<T extends TerminalLiveInputFocusTarget
       if (!current.canSend || !current.liveInputEnabled || activeHandleRef.current === null) {
         return
       }
-      if (current.androidWebviewFocus && current.focusTerminalWebview) {
-        current.focusTerminalWebview()
-        return
-      }
       inputRef.current?.focus()
     })
   }, [activeHandleRef, inputRef, timerRef])
@@ -115,10 +97,6 @@ export function useTerminalLiveInputFocus<T extends TerminalLiveInputFocusTarget
   const focusLiveInput = useCallback(() => {
     const context = contextRef.current
     if (!context.canSend || !context.liveInputEnabled) {
-      return
-    }
-    if (context.androidWebviewFocus && context.focusTerminalWebview) {
-      context.focusTerminalWebview()
       return
     }
     focusTerminalLiveInputTarget(inputRef.current, {
@@ -132,13 +110,6 @@ export function useTerminalLiveInputFocus<T extends TerminalLiveInputFocusTarget
     (handle: string) => {
       const context = contextRef.current
       if (handle !== activeHandleRef.current || !context.canSend || !context.liveInputEnabled) {
-        return
-      }
-      // Why: Android hardware keys dispatch to the focused view — native
-      // EditText consumes arrows/escape before onKeyPress sees them, so
-      // surface taps hand input focus to the WebView's xterm instead.
-      if (context.androidWebviewFocus && context.focusTerminalWebview) {
-        context.focusTerminalWebview()
         return
       }
       // WKWebView still owns first responder during its touchend notification.
