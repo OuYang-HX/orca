@@ -7,6 +7,15 @@ import type {
 } from './terminal-live-input'
 import { useTerminalLiveInputFocus } from './use-terminal-live-input-focus'
 
+const platformRef = vi.hoisted(() => ({ os: 'android' as 'android' | 'ios' }))
+vi.mock('react-native', () => ({
+  Platform: {
+    get OS(): string {
+      return platformRef.os
+    }
+  }
+}))
+
 type HarnessProps = {
   readonly activeHandleRef: RefObject<string | null>
   readonly canSend: boolean
@@ -101,6 +110,32 @@ function connectedProps(
 describe('terminal live input focus hook', () => {
   afterEach(() => {
     vi.useRealTimers()
+    platformRef.os = 'android'
+  })
+
+  it('refocuses the capture field after a natural blur on Android', () => {
+    vi.useFakeTimers()
+    const input = createFocusTarget()
+    const harness = createHarness(connectedProps({ current: input }))
+
+    harness.handlers().handleCaptureBlur()
+    vi.runOnlyPendingTimers()
+
+    expect(input.focus).toHaveBeenCalledTimes(1)
+    harness.unmount()
+  })
+
+  it('never refocuses on blur on iOS so a swiped-away keyboard stays dismissed', () => {
+    vi.useFakeTimers()
+    platformRef.os = 'ios'
+    const input = createFocusTarget()
+    const harness = createHarness(connectedProps({ current: input }))
+
+    harness.handlers().handleCaptureBlur()
+    vi.runAllTimers()
+
+    expect(input.focus).not.toHaveBeenCalled()
+    harness.unmount()
   })
 
   it('defers initial terminal surface focus until the WebView touch has completed', () => {
