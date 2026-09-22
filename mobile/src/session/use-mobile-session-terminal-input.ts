@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { translate } from '../i18n/mobile-i18n'
 import { terminalBufferClear, terminalInputSend } from '../terminal/mobile-terminal-operations'
 import {
+  beginTerminalLiveInputSuppressedBlur,
   clearTerminalLiveInputFocusTimer,
   scheduleTerminalLiveInputFocus
 } from '../terminal/terminal-live-input'
@@ -69,6 +70,8 @@ export function useMobileSessionTerminalInput(scope: MobileSessionFileActionsMod
     } else if (nextEnabled) {
       scheduleTerminalLiveInputFocus(liveInputFocusTimerRef, () => liveInputRef.current?.focus())
     } else {
+      beginTerminalLiveInputSuppressedBlur()
+      clearTerminalLiveInputFocusTimer(liveInputFocusTimerRef)
       liveInputRef.current?.blur()
     }
   }, [activeHandle, clearPendingLiveInputCommit, keyboardHeight, toggleTerminalLiveInput])

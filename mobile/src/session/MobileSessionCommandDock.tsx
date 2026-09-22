@@ -59,6 +59,8 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
     canSend,
     canCompose,
     liveInputEnabled,
+    focusLiveInput,
+    handleCaptureBlur,
     dictation,
     commandDictationPreview,
     liveDictationText,
@@ -139,6 +141,7 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
                   handleLiveInputChange(event)
                 }
               }}
+              onBlur={handleCaptureBlur}
               onKeyPress={handleLiveInputKeyPress}
               onSubmitEditing={submitLiveInput}
               placeholder={t('session.terminalLiveInputStatus.liveInput', 'Live input')}
