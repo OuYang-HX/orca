@@ -100,52 +100,116 @@ class TerminalHwKeysModuleTest {
   fun `submit keys are gated on live input focus`() {
     // Focused: the field/IME owns the key, so it must fall through.
     assertFalse(
-      TerminalHwKeysModule.isMappedKeyEvent(
+      TerminalHwKeysModule.shouldInterceptKeyEvent(
         KeyEvent.KEYCODE_ENTER,
         ctrl = false,
         alt = false,
         shift = false,
-        liveInputFocused = true
+        liveInputFocused = true,
+        interceptEnabled = true,
+        submitInterceptEnabled = false
       )
     )
     // Unfocused: intercepted so the shell gets the return instead of Android
     // focus-search clicking whatever Pressable gains focus.
     assertTrue(
-      TerminalHwKeysModule.isMappedKeyEvent(
+      TerminalHwKeysModule.shouldInterceptKeyEvent(
         KeyEvent.KEYCODE_ENTER,
         ctrl = false,
         alt = false,
         shift = false,
-        liveInputFocused = false
+        liveInputFocused = false,
+        interceptEnabled = true,
+        submitInterceptEnabled = false
       )
     )
     assertTrue(
-      TerminalHwKeysModule.isMappedKeyEvent(
+      TerminalHwKeysModule.shouldInterceptKeyEvent(
         KeyEvent.KEYCODE_NUMPAD_ENTER,
         ctrl = false,
         alt = false,
         shift = false,
-        liveInputFocused = false
+        liveInputFocused = false,
+        interceptEnabled = true,
+        submitInterceptEnabled = false
       )
     )
     // Modified Enter stays unmapped either way.
     assertFalse(
-      TerminalHwKeysModule.isMappedKeyEvent(
+      TerminalHwKeysModule.shouldInterceptKeyEvent(
         KeyEvent.KEYCODE_ENTER,
         ctrl = true,
         alt = false,
         shift = false,
-        liveInputFocused = false
+        liveInputFocused = false,
+        interceptEnabled = true,
+        submitInterceptEnabled = false
       )
     )
     // Navigation keys keep their mapping regardless of focus.
     assertTrue(
-      TerminalHwKeysModule.isMappedKeyEvent(
+      TerminalHwKeysModule.shouldInterceptKeyEvent(
         KeyEvent.KEYCODE_DPAD_UP,
         ctrl = false,
         alt = false,
         shift = false,
-        liveInputFocused = true
+        liveInputFocused = true,
+        interceptEnabled = true,
+        submitInterceptEnabled = false
+      )
+    )
+  }
+
+  @Test
+  fun `submit keys stay guarded while the session route is connecting`() {
+    // The connect window: terminal-tab interception (interceptEnabled) is not
+    // on yet, but the session route is focused. Unfocused submit keys must
+    // still be consumed instead of falling through to focus-search.
+    assertTrue(
+      TerminalHwKeysModule.shouldInterceptKeyEvent(
+        KeyEvent.KEYCODE_ENTER,
+        ctrl = false,
+        alt = false,
+        shift = false,
+        liveInputFocused = false,
+        interceptEnabled = false,
+        submitInterceptEnabled = true
+      )
+    )
+    // Focused field still owns the key.
+    assertFalse(
+      TerminalHwKeysModule.shouldInterceptKeyEvent(
+        KeyEvent.KEYCODE_ENTER,
+        ctrl = false,
+        alt = false,
+        shift = false,
+        liveInputFocused = true,
+        interceptEnabled = false,
+        submitInterceptEnabled = true
+      )
+    )
+    // Navigation keys must NOT be claimed before the tab can receive bytes.
+    assertFalse(
+      TerminalHwKeysModule.shouldInterceptKeyEvent(
+        KeyEvent.KEYCODE_DPAD_UP,
+        ctrl = false,
+        alt = false,
+        shift = false,
+        liveInputFocused = false,
+        interceptEnabled = false,
+        submitInterceptEnabled = true
+      )
+    )
+    // Off the session route nothing is claimed.
+    assertFalse(
+      TerminalHwKeysModule.shouldInterceptKeyEvent(
+        KeyEvent.KEYCODE_ENTER,
+        ctrl = false,
+        alt = false,
+        shift = false,
+        liveInputFocused = false,
+        interceptEnabled = false,
+        submitInterceptEnabled = false
       )
     )
   }

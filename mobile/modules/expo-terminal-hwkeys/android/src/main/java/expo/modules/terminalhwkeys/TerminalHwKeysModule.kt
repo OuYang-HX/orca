@@ -15,6 +15,10 @@ class TerminalHwKeysModule : Module() {
 
     @Volatile
     @JvmField
+    var submitInterceptEnabled: Boolean = false
+
+    @Volatile
+    @JvmField
     var liveInputFocused: Boolean = false
 
     @Volatile
@@ -22,7 +26,7 @@ class TerminalHwKeysModule : Module() {
 
     @JvmStatic
     fun maybeDispatchKeyEvent(event: KeyEvent): Boolean {
-      if (!interceptEnabled) {
+      if (!interceptEnabled && !submitInterceptEnabled) {
         return false
       }
       val module = instance ?: return false
@@ -32,31 +36,39 @@ class TerminalHwKeysModule : Module() {
     // Why: consumption and encoding must agree exactly, so a claimed key is
     // never swallowed without bytes reaching the shell.
     @JvmStatic
-    fun isMappedKeyEvent(event: KeyEvent): Boolean =
-      isMappedKeyEvent(
+    fun shouldInterceptKeyEvent(event: KeyEvent): Boolean =
+      shouldInterceptKeyEvent(
         event.keyCode,
         event.isCtrlPressed,
         event.isAltPressed,
         event.isShiftPressed,
-        liveInputFocused
+        liveInputFocused,
+        interceptEnabled,
+        submitInterceptEnabled
       )
 
     @JvmStatic
-    fun isMappedKeyEvent(
+    fun shouldInterceptKeyEvent(
       keyCode: Int,
       ctrl: Boolean,
       alt: Boolean,
       shift: Boolean,
-      liveInputFocused: Boolean
+      liveInputFocused: Boolean,
+      interceptEnabled: Boolean,
+      submitInterceptEnabled: Boolean
     ): Boolean {
       if (bytesFor(keyCode, ctrl, alt, shift) == null) {
         return false
       }
-      // Why: the focused field owns Enter — the IME needs it to confirm
-      // composition and the editor action drives onSubmitEditing. Unfocused
-      // Enter falls through to Android focus-search, which clicks whatever
-      // Pressable gains focus (e.g. the session back button) instead.
-      return !(isSubmitKey(keyCode) && liveInputFocused)
+      // Why: navigation keys leave the field only once the terminal tab is
+      // ready to receive their bytes. Submit keys additionally stand guard for
+      // the whole session-route lifetime: an unfocused Enter that falls through
+      // lands in Android focus-search, which clicks whatever Pressable gains
+      // focus (e.g. the session back button) instead of reaching the shell.
+      if (isSubmitKey(keyCode)) {
+        return (interceptEnabled || submitInterceptEnabled) && !liveInputFocused
+      }
+      return interceptEnabled
     }
 
     private fun isSubmitKey(keyCode: Int): Boolean =
@@ -141,6 +153,10 @@ class TerminalHwKeysModule : Module() {
 
     Function("setEnabled") { enabled: Boolean ->
       interceptEnabled = enabled
+    }
+
+    Function("setSubmitInterceptEnabled") { enabled: Boolean ->
+      submitInterceptEnabled = enabled
     }
 
     Function("setLiveInputFocused") { focused: Boolean ->
