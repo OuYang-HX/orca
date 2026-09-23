@@ -11,6 +11,7 @@ import {
 } from 'lucide-react-native'
 import { triggerMediumImpact } from '../platform/haptics'
 import { createTerminalLiveAccessoryInput } from '../terminal/terminal-live-accessory-input'
+import { setTerminalLiveInputFocused } from '../terminal/terminal-hardware-keys'
 import {
   getTerminalCommandKeyboardType,
   getTerminalLiveInputKeyboardType
@@ -297,7 +298,13 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
               style={styles.liveInputCapture}
               value={liveInputCapture}
               onChange={handleLiveInputChange}
-              onBlur={handleCaptureBlur}
+              onFocus={() => setTerminalLiveInputFocused(true)}
+              // Why: the native Enter gate must flip on the raw blur, before any
+              // blur-refocus the handler below may schedule.
+              onBlur={() => {
+                setTerminalLiveInputFocused(false)
+                handleCaptureBlur()
+              }}
               onKeyPress={handleLiveInputKeyPress}
               onSubmitEditing={submitLiveInput}
               placeholder=""
