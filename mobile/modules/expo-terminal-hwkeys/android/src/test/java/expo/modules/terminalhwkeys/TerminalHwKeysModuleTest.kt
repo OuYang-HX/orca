@@ -97,28 +97,29 @@ class TerminalHwKeysModuleTest {
   }
 
   @Test
-  fun `submit keys are gated on live input focus`() {
-    // Focused: the field/IME owns the key, so it must fall through.
+  fun `submit keys are gated on a live focused editor`() {
+    // Focused field (Activity.currentFocus is an EditText): the field/IME owns
+    // the key, so it must fall through.
     assertFalse(
       TerminalHwKeysModule.shouldInterceptKeyEvent(
         KeyEvent.KEYCODE_ENTER,
         ctrl = false,
         alt = false,
         shift = false,
-        liveInputFocused = true,
+        hasFocusedEditor = true,
         interceptEnabled = true,
         submitInterceptEnabled = false
       )
     )
-    // Unfocused: intercepted so the shell gets the return instead of Android
-    // focus-search clicking whatever Pressable gains focus.
+    // No focused editor: intercepted so the shell gets the return instead of
+    // Android focus-search clicking whatever Pressable gains focus.
     assertTrue(
       TerminalHwKeysModule.shouldInterceptKeyEvent(
         KeyEvent.KEYCODE_ENTER,
         ctrl = false,
         alt = false,
         shift = false,
-        liveInputFocused = false,
+        hasFocusedEditor = false,
         interceptEnabled = true,
         submitInterceptEnabled = false
       )
@@ -129,7 +130,7 @@ class TerminalHwKeysModuleTest {
         ctrl = false,
         alt = false,
         shift = false,
-        liveInputFocused = false,
+        hasFocusedEditor = false,
         interceptEnabled = true,
         submitInterceptEnabled = false
       )
@@ -141,19 +142,19 @@ class TerminalHwKeysModuleTest {
         ctrl = true,
         alt = false,
         shift = false,
-        liveInputFocused = false,
+        hasFocusedEditor = false,
         interceptEnabled = true,
         submitInterceptEnabled = false
       )
     )
-    // Navigation keys keep their mapping regardless of focus.
+    // Navigation keys keep their mapping regardless of editor focus.
     assertTrue(
       TerminalHwKeysModule.shouldInterceptKeyEvent(
         KeyEvent.KEYCODE_DPAD_UP,
         ctrl = false,
         alt = false,
         shift = false,
-        liveInputFocused = true,
+        hasFocusedEditor = true,
         interceptEnabled = true,
         submitInterceptEnabled = false
       )
@@ -163,27 +164,27 @@ class TerminalHwKeysModuleTest {
   @Test
   fun `submit keys stay guarded while the session route is connecting`() {
     // The connect window: terminal-tab interception (interceptEnabled) is not
-    // on yet, but the session route is focused. Unfocused submit keys must
-    // still be consumed instead of falling through to focus-search.
+    // on yet, but the session route is focused. Submit keys without a focused
+    // editor must still be consumed instead of falling through to focus-search.
     assertTrue(
       TerminalHwKeysModule.shouldInterceptKeyEvent(
         KeyEvent.KEYCODE_ENTER,
         ctrl = false,
         alt = false,
         shift = false,
-        liveInputFocused = false,
+        hasFocusedEditor = false,
         interceptEnabled = false,
         submitInterceptEnabled = true
       )
     )
-    // Focused field still owns the key.
+    // A focused editor still owns the key.
     assertFalse(
       TerminalHwKeysModule.shouldInterceptKeyEvent(
         KeyEvent.KEYCODE_ENTER,
         ctrl = false,
         alt = false,
         shift = false,
-        liveInputFocused = true,
+        hasFocusedEditor = true,
         interceptEnabled = false,
         submitInterceptEnabled = true
       )
@@ -195,7 +196,7 @@ class TerminalHwKeysModuleTest {
         ctrl = false,
         alt = false,
         shift = false,
-        liveInputFocused = false,
+        hasFocusedEditor = false,
         interceptEnabled = false,
         submitInterceptEnabled = true
       )
@@ -207,7 +208,7 @@ class TerminalHwKeysModuleTest {
         ctrl = false,
         alt = false,
         shift = false,
-        liveInputFocused = false,
+        hasFocusedEditor = false,
         interceptEnabled = false,
         submitInterceptEnabled = false
       )

@@ -18,10 +18,6 @@ class TerminalHwKeysModule : Module() {
     var submitInterceptEnabled: Boolean = false
 
     @Volatile
-    @JvmField
-    var liveInputFocused: Boolean = false
-
-    @Volatile
     private var instance: TerminalHwKeysModule? = null
 
     @JvmStatic
@@ -36,13 +32,13 @@ class TerminalHwKeysModule : Module() {
     // Why: consumption and encoding must agree exactly, so a claimed key is
     // never swallowed without bytes reaching the shell.
     @JvmStatic
-    fun shouldInterceptKeyEvent(event: KeyEvent): Boolean =
+    fun shouldInterceptKeyEvent(event: KeyEvent, hasFocusedEditor: Boolean): Boolean =
       shouldInterceptKeyEvent(
         event.keyCode,
         event.isCtrlPressed,
         event.isAltPressed,
         event.isShiftPressed,
-        liveInputFocused,
+        hasFocusedEditor,
         interceptEnabled,
         submitInterceptEnabled
       )
@@ -53,7 +49,7 @@ class TerminalHwKeysModule : Module() {
       ctrl: Boolean,
       alt: Boolean,
       shift: Boolean,
-      liveInputFocused: Boolean,
+      hasFocusedEditor: Boolean,
       interceptEnabled: Boolean,
       submitInterceptEnabled: Boolean
     ): Boolean {
@@ -65,8 +61,10 @@ class TerminalHwKeysModule : Module() {
       // the whole session-route lifetime: an unfocused Enter that falls through
       // lands in Android focus-search, which clicks whatever Pressable gains
       // focus (e.g. the session back button) instead of reaching the shell.
+      // hasFocusedEditor is read live at the dispatch gate (Activity.currentFocus)
+      // — an event-reported focus flag went stale across route remounts.
       if (isSubmitKey(keyCode)) {
-        return (interceptEnabled || submitInterceptEnabled) && !liveInputFocused
+        return (interceptEnabled || submitInterceptEnabled) && !hasFocusedEditor
       }
       return interceptEnabled
     }
@@ -157,10 +155,6 @@ class TerminalHwKeysModule : Module() {
 
     Function("setSubmitInterceptEnabled") { enabled: Boolean ->
       submitInterceptEnabled = enabled
-    }
-
-    Function("setLiveInputFocused") { focused: Boolean ->
-      liveInputFocused = focused
     }
   }
 
