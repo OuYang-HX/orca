@@ -14,6 +14,10 @@ class TerminalHwKeysModule : Module() {
     var interceptEnabled: Boolean = false
 
     @Volatile
+    @JvmField
+    var liveInputFocused: Boolean = false
+
+    @Volatile
     private var instance: TerminalHwKeysModule? = null
 
     @JvmStatic
@@ -29,7 +33,36 @@ class TerminalHwKeysModule : Module() {
     // never swallowed without bytes reaching the shell.
     @JvmStatic
     fun isMappedKeyEvent(event: KeyEvent): Boolean =
-      bytesFor(event.keyCode, event.isCtrlPressed, event.isAltPressed, event.isShiftPressed) != null
+      isMappedKeyEvent(
+        event.keyCode,
+        event.isCtrlPressed,
+        event.isAltPressed,
+        event.isShiftPressed,
+        liveInputFocused
+      )
+
+    @JvmStatic
+    fun isMappedKeyEvent(
+      keyCode: Int,
+      ctrl: Boolean,
+      alt: Boolean,
+      shift: Boolean,
+      liveInputFocused: Boolean
+    ): Boolean {
+      if (bytesFor(keyCode, ctrl, alt, shift) == null) {
+        return false
+      }
+      // Why: the focused field owns Enter — the IME needs it to confirm
+      // composition and the editor action drives onSubmitEditing. Unfocused
+      // Enter falls through to Android focus-search, which clicks whatever
+      // Pressable gains focus (e.g. the session back button) instead.
+      return !(isSubmitKey(keyCode) && liveInputFocused)
+    }
+
+    private fun isSubmitKey(keyCode: Int): Boolean =
+      keyCode == KeyEvent.KEYCODE_ENTER ||
+        keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER ||
+        keyCode == KeyEvent.KEYCODE_DPAD_CENTER
 
     @JvmStatic
     fun bytesForKey(event: KeyEvent): String? =
@@ -90,6 +123,10 @@ class TerminalHwKeysModule : Module() {
         KeyEvent.KEYCODE_PAGE_DOWN -> if (ctrl || alt || shift) null else "\u001b[6~"
         KeyEvent.KEYCODE_MOVE_HOME -> if (ctrl || alt || shift) null else "\u001b[H"
         KeyEvent.KEYCODE_MOVE_END -> if (ctrl || alt || shift) null else "\u001b[F"
+        // Why: only reached when the live input is unfocused (see
+        // isMappedKeyEvent) — the shell gets the return the field would have.
+        KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER, KeyEvent.KEYCODE_DPAD_CENTER ->
+          if (ctrl || alt || shift) null else "\r"
         else -> null
       }
     }
@@ -104,6 +141,10 @@ class TerminalHwKeysModule : Module() {
 
     Function("setEnabled") { enabled: Boolean ->
       interceptEnabled = enabled
+    }
+
+    Function("setLiveInputFocused") { focused: Boolean ->
+      liveInputFocused = focused
     }
   }
 
