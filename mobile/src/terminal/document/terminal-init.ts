@@ -102,7 +102,10 @@ export function init(
     // A full inactive cell remains visible under the terminal's phone-fit scale.
     cursorInactiveStyle: MOBILE_TERMINAL_CARET_OPTIONS.cursorInactiveStyle,
     convertEol: false,
-    allowProposedApi: true
+    allowProposedApi: true,
+    // Why off: our ?997;1n color-scheme reply crosses the relay and lands after
+    // the querying TUI exited, so the shell echoes it as literal `997;1n`.
+    vtExtensions: { colorSchemeQuery: false }
   })
   const nextTerm = scope.term
   scope.pendingTerm = nextTerm
