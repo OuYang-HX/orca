@@ -8,7 +8,8 @@ import { useTerminalLiveInputFocus } from '../terminal/use-terminal-live-input-f
 import { scheduleTerminalLiveInputFocus } from '../terminal/terminal-live-input'
 import {
   addTerminalHardwareKeyListener,
-  setTerminalHardwareKeysEnabled
+  setTerminalHardwareKeysEnabled,
+  setTerminalSubmitInterceptEnabled
 } from '../terminal/terminal-hardware-keys'
 import type { TerminalLiveInputSender } from '../terminal/terminal-live-input-sender'
 import { useTerminalLiveInputCommit } from '../terminal/use-terminal-live-input-commit'
@@ -146,6 +147,19 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
       Platform.OS === 'android' && liveInputEnabled && canSend && activeHandle !== null
     )
   }, [activeHandle, canSend, liveInputEnabled])
+  // Why: submit keys must guard from route focus, not from connection readiness —
+  // an unfocused Enter during the connect window falls through to Android
+  // focus-search, which clicks whatever Pressable gains focus (session exit).
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS === 'android') {
+        setTerminalSubmitInterceptEnabled(true)
+      }
+      return () => {
+        setTerminalSubmitInterceptEnabled(false)
+      }
+    }, [])
+  )
   // Why: the subscription lifetime matches the session route, not reactive values.
   const liveInputSubmitRef = useRef(handleLiveInputSubmit)
   useEffect(() => {

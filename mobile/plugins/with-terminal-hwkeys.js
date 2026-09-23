@@ -6,8 +6,7 @@ const DISPATCH_OVERRIDE = `
     // EditText before TextInput.onKeyPress can see them. When the terminal
     // screen enables interception, forward those keys to JS as escape bytes
     // and consume BOTH down and up so no view synthesizes a second event.
-    if (expo.modules.terminalhwkeys.TerminalHwKeysModule.interceptEnabled &&
-        expo.modules.terminalhwkeys.TerminalHwKeysModule.isMappedKeyEvent(event)) {
+    if (expo.modules.terminalhwkeys.TerminalHwKeysModule.shouldInterceptKeyEvent(event)) {
       if (event.action == android.view.KeyEvent.ACTION_DOWN) {
         expo.modules.terminalhwkeys.TerminalHwKeysModule.maybeDispatchKeyEvent(event)
       }
