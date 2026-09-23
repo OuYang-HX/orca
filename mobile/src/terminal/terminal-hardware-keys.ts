@@ -11,7 +11,6 @@ type TerminalHwKeysEvents = {
 declare class TerminalHwKeysModule extends NativeModule<TerminalHwKeysEvents> {
   setEnabled(enabled: boolean): void
   setSubmitInterceptEnabled(enabled: boolean): void
-  setLiveInputFocused(focused: boolean): void
 }
 
 const TerminalHwKeys =
@@ -29,16 +28,11 @@ export function setTerminalHardwareKeysEnabled(enabled: boolean): void {
 
 // Why: submit keys stand guard from route focus — before the tab strip and
 // connection settle, an unfocused Enter would otherwise fall through to
-// Android focus-search and click whatever Pressable gains focus.
+// Android focus-search and click whatever Pressable gains focus. Whether the
+// field owns Enter is read live at the dispatch gate (Activity.currentFocus),
+// so no JS focus reporting is needed.
 export function setTerminalSubmitInterceptEnabled(enabled: boolean): void {
   TerminalHwKeys?.setSubmitInterceptEnabled(enabled)
-}
-
-// Why: the focused field owns Enter (IME composition confirm / editor action);
-// unfocused Enter is intercepted instead of falling through to Android
-// focus-search, which would click whatever Pressable gains focus.
-export function setTerminalLiveInputFocused(focused: boolean): void {
-  TerminalHwKeys?.setLiveInputFocused(focused)
 }
 
 export function addTerminalHardwareKeyListener(listener: (bytes: string) => void): () => void {
