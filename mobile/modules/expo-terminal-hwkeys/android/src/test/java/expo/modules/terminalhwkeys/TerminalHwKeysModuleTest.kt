@@ -81,9 +81,73 @@ class TerminalHwKeysModuleTest {
 
   @Test
   fun `unmapped keys stay unmapped`() {
-    assertEquals(null, bytes(KeyEvent.KEYCODE_ENTER))
     assertEquals(null, bytes(KeyEvent.KEYCODE_SPACE))
     assertEquals(null, bytes(KeyEvent.KEYCODE_9))
+  }
+
+  @Test
+  fun `submit keys encode carriage return unless modified`() {
+    assertEquals("\r", bytes(KeyEvent.KEYCODE_ENTER))
+    assertEquals("\r", bytes(KeyEvent.KEYCODE_NUMPAD_ENTER))
+    assertEquals("\r", bytes(KeyEvent.KEYCODE_DPAD_CENTER))
+    // Modified submit keys have no binding and must fall through.
+    assertEquals(null, bytes(KeyEvent.KEYCODE_ENTER, ctrl = true))
+    assertEquals(null, bytes(KeyEvent.KEYCODE_NUMPAD_ENTER, alt = true))
+    assertEquals(null, bytes(KeyEvent.KEYCODE_DPAD_CENTER, shift = true))
+  }
+
+  @Test
+  fun `submit keys are gated on live input focus`() {
+    // Focused: the field/IME owns the key, so it must fall through.
+    assertFalse(
+      TerminalHwKeysModule.isMappedKeyEvent(
+        KeyEvent.KEYCODE_ENTER,
+        ctrl = false,
+        alt = false,
+        shift = false,
+        liveInputFocused = true
+      )
+    )
+    // Unfocused: intercepted so the shell gets the return instead of Android
+    // focus-search clicking whatever Pressable gains focus.
+    assertTrue(
+      TerminalHwKeysModule.isMappedKeyEvent(
+        KeyEvent.KEYCODE_ENTER,
+        ctrl = false,
+        alt = false,
+        shift = false,
+        liveInputFocused = false
+      )
+    )
+    assertTrue(
+      TerminalHwKeysModule.isMappedKeyEvent(
+        KeyEvent.KEYCODE_NUMPAD_ENTER,
+        ctrl = false,
+        alt = false,
+        shift = false,
+        liveInputFocused = false
+      )
+    )
+    // Modified Enter stays unmapped either way.
+    assertFalse(
+      TerminalHwKeysModule.isMappedKeyEvent(
+        KeyEvent.KEYCODE_ENTER,
+        ctrl = true,
+        alt = false,
+        shift = false,
+        liveInputFocused = false
+      )
+    )
+    // Navigation keys keep their mapping regardless of focus.
+    assertTrue(
+      TerminalHwKeysModule.isMappedKeyEvent(
+        KeyEvent.KEYCODE_DPAD_UP,
+        ctrl = false,
+        alt = false,
+        shift = false,
+        liveInputFocused = true
+      )
+    )
   }
 
   @Test
