@@ -4,7 +4,6 @@ import { hostOs } from '../platform/host-os'
 import { ComposerSendButton } from '../components/composer-input/ComposerSendButton'
 import { MessageBox } from '../components/composer-input/MessageBox'
 import { composerInputStyles as inputStyles } from '../components/composer-input/composer-input-styles'
-import { setTerminalLiveInputFocused } from '../terminal/terminal-hardware-keys'
 import {
   getTerminalCommandKeyboardType,
   getTerminalLiveInputKeyboardType
@@ -142,13 +141,7 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
                   handleLiveInputChange(event)
                 }
               }}
-              onFocus={() => setTerminalLiveInputFocused(true)}
-              // Why: the native Enter gate must flip on the raw blur, before any
-              // blur-refocus the handler below may schedule.
-              onBlur={() => {
-                setTerminalLiveInputFocused(false)
-                handleCaptureBlur()
-              }}
+              onBlur={handleCaptureBlur}
               onKeyPress={handleLiveInputKeyPress}
               onSubmitEditing={submitLiveInput}
               placeholder={t('session.terminalLiveInputStatus.liveInput', 'Live input')}
