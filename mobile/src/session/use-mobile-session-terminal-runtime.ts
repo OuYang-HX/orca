@@ -146,6 +146,11 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
       Platform.OS === 'android' && liveInputEnabled && canSend && activeHandle !== null
     )
   }, [activeHandle, canSend, liveInputEnabled])
+  // Why: the subscription lifetime matches the session route, not reactive values.
+  const liveInputSubmitRef = useRef(handleLiveInputSubmit)
+  useEffect(() => {
+    liveInputSubmitRef.current = handleLiveInputSubmit
+  })
   useEffect(() => {
     return addTerminalHardwareKeyListener((bytes) => {
       const handle = activeHandleRef.current
@@ -154,6 +159,13 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
         connStateRef.current !== 'connected' ||
         !liveInputTerminalHandlesRef.current.has(handle)
       ) {
+        return
+      }
+      // Why: intercepted Enter only arrives unfocused (isMappedKeyEvent gate);
+      // route it through the submit path so any held field text flushes first,
+      // exactly like onSubmitEditing for the focused field.
+      if (bytes === '\r') {
+        void liveInputSubmitRef.current()
         return
       }
       void sendLiveTerminalInputRef.current(handle, bytes)

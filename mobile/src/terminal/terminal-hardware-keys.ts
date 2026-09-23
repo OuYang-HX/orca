@@ -10,6 +10,7 @@ type TerminalHwKeysEvents = {
 
 declare class TerminalHwKeysModule extends NativeModule<TerminalHwKeysEvents> {
   setEnabled(enabled: boolean): void
+  setLiveInputFocused(focused: boolean): void
 }
 
 const TerminalHwKeys =
@@ -23,6 +24,13 @@ const hardwareKeyEmitter = TerminalHwKeys
 
 export function setTerminalHardwareKeysEnabled(enabled: boolean): void {
   TerminalHwKeys?.setEnabled(enabled)
+}
+
+// Why: the focused field owns Enter (IME composition confirm / editor action);
+// unfocused Enter is intercepted instead of falling through to Android
+// focus-search, which would click whatever Pressable gains focus.
+export function setTerminalLiveInputFocused(focused: boolean): void {
+  TerminalHwKeys?.setLiveInputFocused(focused)
 }
 
 export function addTerminalHardwareKeyListener(listener: (bytes: string) => void): () => void {
