@@ -51,7 +51,10 @@ function openTerminal(scope: TerminalDocumentScope, cols: number, rows: number) 
     showCursorImmediately: MOBILE_TERMINAL_CARET_OPTIONS.showCursorImmediately,
     cursorInactiveStyle: MOBILE_TERMINAL_CARET_OPTIONS.cursorInactiveStyle,
     convertEol: false,
-    allowProposedApi: true
+    allowProposedApi: true,
+    // Why off: our ?997;1n color-scheme reply crosses the relay and lands after
+    // the querying TUI exited, so the shell echoes it as literal `997;1n`.
+    vtExtensions: { colorSchemeQuery: false }
   })
   scope.term = term
   attachOsc52ClipboardBridge(scope, term)
