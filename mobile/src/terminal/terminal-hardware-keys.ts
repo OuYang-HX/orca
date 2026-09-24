@@ -11,6 +11,7 @@ type TerminalHwKeysEvents = {
 declare class TerminalHwKeysModule extends NativeModule<TerminalHwKeysEvents> {
   setEnabled(enabled: boolean): void
   setSubmitInterceptEnabled(enabled: boolean): void
+  isHardwareKeyboardConnected(): boolean
 }
 
 const TerminalHwKeys =
@@ -33,6 +34,16 @@ export function setTerminalHardwareKeysEnabled(enabled: boolean): void {
 // so no JS focus reporting is needed.
 export function setTerminalSubmitInterceptEnabled(enabled: boolean): void {
   TerminalHwKeys?.setSubmitInterceptEnabled(enabled)
+}
+
+// Why: with a hardware keyboard attached the soft keyboard never shows
+// (keyboardHeight stays 0), so keyboardHeight-based focus gates would never
+// fire for hardware-keyboard users switching tabs or workspaces. Only a real
+// typing keyboard counts — auto-focusing must never pop the IME for touch
+// users, and Android suppresses the soft keyboard while a hardware one is
+// connected anyway.
+export function isTerminalHardwareKeyboardConnected(): boolean {
+  return TerminalHwKeys?.isHardwareKeyboardConnected() ?? false
 }
 
 export function addTerminalHardwareKeyListener(listener: (bytes: string) => void): () => void {
