@@ -8,6 +8,7 @@ import { useTerminalLiveInputFocus } from '../terminal/use-terminal-live-input-f
 import { scheduleTerminalLiveInputFocus } from '../terminal/terminal-live-input'
 import {
   addTerminalHardwareKeyListener,
+  isTerminalHardwareKeyboardConnected,
   setTerminalHardwareKeysEnabled,
   setTerminalSubmitInterceptEnabled
 } from '../terminal/terminal-hardware-keys'
@@ -205,13 +206,15 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
     }, [resetLiveInputFocus])
   )
   // Why: hardware-keyboard users expect the capture field to stay focused when
-  // they switch terminal tabs; only re-focus when the keyboard is already up so
-  // touch phones never get an unprompted keyboard on tab activation.
+  // they switch terminal tabs or workspaces; the keyboardHeight gate covers the
+  // soft keyboard already being up, and a connected typing keyboard covers the
+  // hardware case — its IME stays hidden either way. Touch phones without a
+  // keyboard never get an unprompted soft keyboard on tab activation.
   const previousFocusHandleRef = useRef<string | null>(null)
   useEffect(() => {
     if (
       activeHandle !== previousFocusHandleRef.current &&
-      keyboardHeight > 0 &&
+      (keyboardHeight > 0 || isTerminalHardwareKeyboardConnected()) &&
       liveInputEnabled &&
       canSend
     ) {
