@@ -156,6 +156,22 @@ class TerminalHwKeysModule : Module() {
     Function("setSubmitInterceptEnabled") { enabled: Boolean ->
       submitInterceptEnabled = enabled
     }
+
+    Function("isHardwareKeyboardConnected") {
+      val context = appContext.reactContext
+      val inputManager =
+        context?.getSystemService(android.content.Context.INPUT_SERVICE)
+          as? android.hardware.input.InputManager
+      val devices = inputManager?.inputDeviceIds ?: IntArray(0)
+      devices.any { id ->
+        val device = android.view.InputDevice.getDevice(id) ?: return@any false
+        // Why ALPHABETICAL: power/volume gpio keys also report SOURCE_KEYBOARD;
+        // only a real typing keyboard may justify stealing focus on switch.
+        !device.isVirtual &&
+          device.keyboardType == android.view.InputDevice.KEYBOARD_TYPE_ALPHABETIC &&
+          (device.sources and android.view.InputDevice.SOURCE_KEYBOARD) != 0
+      }
+    }
   }
 
   fun dispatchKeyEvent(event: KeyEvent): Boolean {
