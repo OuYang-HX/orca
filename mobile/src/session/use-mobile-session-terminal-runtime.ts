@@ -212,15 +212,19 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
   // keyboard never get an unprompted soft keyboard on tab activation.
   const previousFocusHandleRef = useRef<string | null>(null)
   useEffect(() => {
+    // Why: the assignment sits inside the branch — tab strip and connection
+    // settle AFTER the switch lands, and marking the handle as seen before the
+    // gate passes would swallow the retry when liveInputEnabled flips true.
     if (
-      activeHandle !== previousFocusHandleRef.current &&
-      (keyboardHeight > 0 || isTerminalHardwareKeyboardConnected()) &&
-      liveInputEnabled &&
-      canSend
+      activeHandle === previousFocusHandleRef.current ||
+      !(keyboardHeight > 0 || isTerminalHardwareKeyboardConnected()) ||
+      !liveInputEnabled ||
+      !canSend
     ) {
-      scheduleTerminalLiveInputFocus(liveInputFocusTimerRef, () => liveInputRef.current?.focus())
+      return
     }
     previousFocusHandleRef.current = activeHandle
+    scheduleTerminalLiveInputFocus(liveInputFocusTimerRef, () => liveInputRef.current?.focus())
   }, [activeHandle, canSend, keyboardHeight, liveInputEnabled, liveInputFocusTimerRef, liveInputRef])
   return {
     ptyModesRef,
