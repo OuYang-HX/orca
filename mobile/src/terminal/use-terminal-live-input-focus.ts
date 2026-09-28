@@ -1,5 +1,5 @@
 import { useCallback, useLayoutEffect, useRef, type RefObject } from 'react'
-import { Platform } from 'react-native'
+import { hostOs } from '../platform/host-os'
 import {
   beginTerminalLiveInputSuppressedBlur,
   clearTerminalLiveInputFocusTimer,
@@ -69,7 +69,7 @@ export function useTerminalLiveInputFocus<T extends TerminalLiveInputFocusTarget
   // stray taps. On iOS a refocus re-opens the soft keyboard the user just
   // swiped away, so the refocus never runs there.
   const handleCaptureBlur = useCallback(() => {
-    if (Platform.OS !== 'android') {
+    if (hostOs() !== 'android') {
       return
     }
     if (isTerminalLiveInputBlurSuppressed()) {

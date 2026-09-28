@@ -145,7 +145,7 @@ const HEAD_CALLBACK_IDENTITY_SHA256 =
 // Again when the init option took the message's name, `initialData`.
 // Again when the document readers mapped refusal codes through one function and kept truncation.
 // [oyhx] refresh: the hardware-key listener and switch auto-focus effect bodies joined.
-const HEAD_CALLBACK_BODY_SHA256 = '2cd9a129faab27e5dd84e266320ca6c38b8069592c756a4f94e58a8ffea6e27b'
+const HEAD_CALLBACK_BODY_SHA256 = '5e56b548de39450bb95b8b2bab62656033eb46af24e928a6a2dda09b1e73b6e5'
 // Refreshed for the startup effect: both `worktree.activate` sends became `worktreeActivate`, and
 // the sleeping-agent check reads that operation's verdict instead of the reply envelope. Refreshed
 // again when the reporter took the reply and interpreted it itself, retiring the hand-built
@@ -158,7 +158,7 @@ const HEAD_CALLBACK_BODY_SHA256 = '2cd9a129faab27e5dd84e266320ca6c38b8069592c756
 // Moved by the capability probe setting that host support object.
 // [oyhx] refresh: +4 effects for the Android hardware-keyboard path — the enabled gate,
 // the native key listener, the switch auto-focus, and the submit-ref keeper (24 → 28).
-const HEAD_EFFECT_SHA256 = '4c5b5902dd2e8ea461273698c3fd8890c9fb8d16515445f6f96bc0d9e5ef519c'
+const HEAD_EFFECT_SHA256 = '27980609adc11e23e1f62a8e772c73f971090d539442c756fc4c8228d7215e3a'
 const HEAD_CONTENT_HOOK_SHA256 = '9c3b612fef3f370d66873aefdbe1d701f20cb64ded31fef5cc45fde6f8189581'
 // Same pin for the 12 bodies that sit in nested functions rather than callbacks, moved by the same
 // rewrite of those send and read expressions. Count unchanged. Refreshed again in step 6 for
