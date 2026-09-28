@@ -1,4 +1,4 @@
-import { Platform } from 'react-native'
+import { hostOs } from '../platform/host-os'
 import { EventEmitter, NativeModule, requireNativeModule } from 'expo-modules-core'
 
 // Why: Android native EditText consumes arrow/escape hardware keys before
@@ -15,7 +15,7 @@ declare class TerminalHwKeysModule extends NativeModule<TerminalHwKeysEvents> {
 }
 
 const TerminalHwKeys =
-  Platform.OS === 'android'
+  hostOs() === 'android'
     ? requireNativeModule<TerminalHwKeysModule>('TerminalHwKeys')
     : null
 

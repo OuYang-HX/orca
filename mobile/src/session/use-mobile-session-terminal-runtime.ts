@@ -1,6 +1,7 @@
 import type { PendingSessionSelection } from './pending-session-selection'
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { Alert, Platform, type Keyboard, type TextInput } from 'react-native'
+import { Alert, type Keyboard, type TextInput } from 'react-native'
+import { hostOs } from '../platform/host-os'
 import type { TerminalFrame } from '../terminal/terminal-webview-messages'
 import { useFocusEffect } from 'expo-router'
 import type { RpcClient } from '../transport/rpc-client'
@@ -161,7 +162,7 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
   // onKeyPress sees them; MainActivity forwards those keys here instead.
   useEffect(() => {
     setTerminalHardwareKeysEnabled(
-      Platform.OS === 'android' && liveInputEnabled && canSend && activeHandle !== null
+      hostOs() === 'android' && liveInputEnabled && canSend && activeHandle !== null
     )
   }, [activeHandle, canSend, liveInputEnabled])
   // Why: submit keys must guard from route focus, not from connection readiness —
@@ -169,7 +170,7 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
   // focus-search, which clicks whatever Pressable gains focus (session exit).
   useFocusEffect(
     useCallback(() => {
-      if (Platform.OS === 'android') {
+      if (hostOs() === 'android') {
         setTerminalSubmitInterceptEnabled(true)
       }
       return () => {
