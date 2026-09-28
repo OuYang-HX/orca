@@ -99,16 +99,22 @@ const HOST_COMPONENT_NAMES = new Set([
 // and the pane's `onCellBoxChange` goes to the viewport refit.
 // Again when one frame ref replaced the height ref, width ref and width state (hooks 280).
 // Again when one `notifyTerminalFrame` took the frame's layout (hooks 281, callbacks 80).
-const HEAD_MAIN_HOOK_SHA256 = '004b011722b17ac82c96f0b3c8e303d39b2431a216424e9b86a1ee6a4896f23e'
+// [oyhx] refresh: +8 hooks and +4 effects for the Android hardware-keyboard path — the
+// key-listener effect, its enabled gate, the tab/workspace switch auto-focus effect and
+// the focus bookkeeping in the terminal runtime, plus +1 callback and +3 refs (281 → 289).
+const HEAD_MAIN_HOOK_SHA256 = '915c85355fbde9ca349b70cef43808f104e0226126215873023dda8215051e29'
 // Moved when the prompt-cancel flag became one structured-session host support object (main).
 // Re-recorded against the merged tree. Again when the frame-layout and cell-box-change callbacks
 // named the refs they read in their dependency lists (react-doctor).
 // Again when the frame's width and height became one `terminalFrameRef`.
 // Again when the frame's layout moved into `notifyTerminalFrame`.
-const HEAD_HOOK_BINDING_SHA256 = 'c1bcb859202aaf8d612d3023cb4d895719da513879c61b01545a249a0bda662b'
+// [oyhx] refresh: the hardware-keyboard effects above name their own deps.
+const HEAD_HOOK_BINDING_SHA256 = '5bdef27791c1b2c5954d7e2444b3b08bc6bac23c6835fb874e19a25a628b899f'
 // Moved when `notifyTerminalFrame` joined and `handleTerminalFrameLayout` became `subscribeIntendedActiveTerminal`.
+// [oyhx] refresh: +1 for toggleLiveInput, whose enable branch now hands the refocus to
+// scheduleTerminalLiveInputFocus (80 → 81).
 const HEAD_CALLBACK_IDENTITY_SHA256 =
-  '9c966301b373c11b27359ef1388c593b638c7f6831186d5c5321553504183e07'
+  '92079c6bbea654f3d940cbada09409d04086ce0baefd01a11fd96f1e906c0758'
 // Pins that no callback body in the route changed unnoticed. Body text, not behaviour: the sends
 // and repo reads inside them now name their `RpcOperation` instead of the raw `sendRequest` port.
 // Refreshed in step 6 for the gesture flush, whose `terminal.send` became `terminalInputSend` and
@@ -138,7 +144,8 @@ const HEAD_CALLBACK_IDENTITY_SHA256 =
 // Again when the frame's layout became one `notifyTerminalFrame`.
 // Again when the init option took the message's name, `initialData`.
 // Again when the document readers mapped refusal codes through one function and kept truncation.
-const HEAD_CALLBACK_BODY_SHA256 = 'ff818790399c8532ead38d047d072caf715070b21311538932da2dc811312b06'
+// [oyhx] refresh: the hardware-key listener and switch auto-focus effect bodies joined.
+const HEAD_CALLBACK_BODY_SHA256 = '2cd9a129faab27e5dd84e266320ca6c38b8069592c756a4f94e58a8ffea6e27b'
 // Refreshed for the startup effect: both `worktree.activate` sends became `worktreeActivate`, and
 // the sleeping-agent check reads that operation's verdict instead of the reply envelope. Refreshed
 // again when the reporter took the reply and interpreted it itself, retiring the hand-built
@@ -149,7 +156,9 @@ const HEAD_CALLBACK_BODY_SHA256 = 'ff818790399c8532ead38d047d072caf715070b213115
 // Moved again by the keyboard seam above, which is the +1 effect.
 // -1 effect for the Markdown actions' Back registration, which is `useBackClaim`'s own now.
 // Moved by the capability probe setting that host support object.
-const HEAD_EFFECT_SHA256 = '9b045a547ed269acf95db16cc87e33a9035a20c6888fd30e0363e58bb6b7d883'
+// [oyhx] refresh: +4 effects for the Android hardware-keyboard path — the enabled gate,
+// the native key listener, the switch auto-focus, and the submit-ref keeper (24 → 28).
+const HEAD_EFFECT_SHA256 = '4c5b5902dd2e8ea461273698c3fd8890c9fb8d16515445f6f96bc0d9e5ef519c'
 const HEAD_CONTENT_HOOK_SHA256 = '9c3b612fef3f370d66873aefdbe1d701f20cb64ded31fef5cc45fde6f8189581'
 // Same pin for the 12 bodies that sit in nested functions rather than callbacks, moved by the same
 // rewrite of those send and read expressions. Count unchanged. Refreshed again in step 6 for
@@ -205,15 +214,18 @@ const HEAD_TIMER_CLEANUP_SHA256 = 'c73f1d1c2cc89642f3d727d6f3b6b81860a9d6f342345
 // page `keyboardShouldPersistTaps` ('handled', 'always'), which react-native-web ignores. Natively
 // the ref is undefined. 532 -> 531: the live input's reopen flag reads the host OS, not an 'android' literal.
 // 531 -> 529: the markdown status line moved to `markdownReaderStatusText`.
+// [oyhx] refresh: 529 -> 533 — the two 'android' platform guards on the hardware-key gate
+// and blur refocus, the '\r' Enter encoding, and the 'react-native' import.
 const HEAD_RUNTIME_STRING_SHA256 =
-  '4ab2f316f60c234480615136c02273675543f24d653eb76a62b76f6bc986d985'
+  'ecc33bfcaa567396d2027072ca9bb052f3044a3bcb2a493041a04f97cbad4e25'
 // Moved by both of the dock's fields: their refs, and the live one's submit handler, are the seam's now;
 // their keyboard type and remount key read the host OS.
 // Moved again when the terminal frame kept its laid-out width unrounded, for every fit.
 // Again when the frame's onLayout wrote one frame ref and notified a new width imperatively.
 // Again when the frame's first laid-out layout alone subscribes a held-back document.
 // Again when the frame's onLayout made one `notifyTerminalFrame` call.
-const HEAD_HOST_JSX_SHA256 = 'f71b1ee495f67a6e389abf597948ffdff1f9a4a10cde6abefd2611ea4dd94245'
+// [oyhx] refresh: the dock's fields read the hardware-keyboard submit path.
+const HEAD_HOST_JSX_SHA256 = '20973a4d33c942fa79a9f2a8f926463dc820dbbf89c90457da453189eb674a32'
 const HEAD_LEAF_JSX_SHA256 = '62eb05c6e2ac0be6d553a141fc8aa1641fcb0c678777d5d539f490aab8648417'
 const HEAD_STYLE_REFERENCE_SHA256 =
   '56a005a1f65b30c11092e3422caef67810e1ec50f66fdd06471c370138b1eeb6'
@@ -611,13 +623,13 @@ describe('mobile session route extraction parity', () => {
     const contentBindings = CONTENT_COMPONENT_NAMES.flatMap(
       (name) => readHookFacts(name, definitions).bindings
     )
-    expect(main.hooks).toHaveLength(281)
+    expect(main.hooks).toHaveLength(289)
     expect(hash(main.hooks)).toBe(HEAD_MAIN_HOOK_SHA256)
     expect(hash(main.bindings)).toBe(HEAD_HOOK_BINDING_SHA256)
-    expect(main.callbacks).toHaveLength(80)
+    expect(main.callbacks).toHaveLength(81)
     expect(hash(main.callbacks)).toBe(HEAD_CALLBACK_IDENTITY_SHA256)
     expect(hash(main.callbackBodies)).toBe(HEAD_CALLBACK_BODY_SHA256)
-    expect(main.effects).toHaveLength(24)
+    expect(main.effects).toHaveLength(28)
     expect(hash(main.effects)).toBe(HEAD_EFFECT_SHA256)
     expect(contentBindings).toHaveLength(14)
     expect(hash(contentBindings)).toBe(HEAD_CONTENT_HOOK_SHA256)
@@ -656,7 +668,7 @@ describe('mobile session route extraction parity', () => {
 
   it('preserves runtime strings, styles, and the expanded JSX tree', () => {
     const strings = readRuntimeStrings()
-    expect(strings).toHaveLength(529)
+    expect(strings).toHaveLength(533)
     expect(hash(strings)).toBe(HEAD_RUNTIME_STRING_SHA256)
     const jsx = readJsxFacts(readDefinitions())
     expect(jsx.host).toHaveLength(125)
