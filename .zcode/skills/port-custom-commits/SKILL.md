@@ -18,21 +18,24 @@ description: 把 orca 个人仓（OuYang-HX）的自定义提交移植到官方�
 - `mobile/android/` 是 prebuild 生成物（gitignore），原生逻辑的唯一事实来源是
   `mobile/plugins/with-terminal-hwkeys.js` + `mobile/modules/expo-terminal-hwkeys/`
 
-## 自定义提交台账（每次同步前核对，被官方覆盖即删；最近核对 2026-09-25 @ upstream bf40d35b0b）
+## 自定义提交台账（每次同步前核对，被官方覆盖即删；最近核对 2026-09-29 @ upstream b482b4d3b4）
 
 | 提交内容 | 对应提交 | 官方是否覆盖 | 处置 |
 | --- | --- | --- | --- |
 | Android 硬件键盘输入（expo-terminal-hwkeys 模块：方向键/ESC/Tab/PgUp/PgDn/Home/End/Ctrl+字母/Ctrl+标点/Alt+字母 → 终端字节；MainActivity dispatchKeyEvent 拦截；with-terminal-hwkeys prebuild 插件） | ff4be07283 + 0798ff6e89 | ❌ 无任何 dispatchKeyEvent/onKeyPreIme 层实现 | 保留 |
 | 提交类按键拦截（Enter/NumpadEnter/DPAD_CENTER 未聚焦时编码 \r 走 submit 路径；`submitInterceptEnabled` 挂路由 useFocusEffect；焦点判定用 MainActivity `currentFocus is EditText` 实时真值） | 1ee3866fbb + 0b10802c38 + b5fa20829f | ❌ | 保留 |
 | 硬件键盘连接探测 + 切换工作区/标签自动聚焦（isHardwareKeyboardConnected；切换 effect 门控 keyboardHeight>0 \|\| 硬键盘；previousHandle 赋值在成功分支内保证异步标签条重试） | a266de6ff1 + c3b2a558d4 | ❌ | 保留 |
-| xterm 6.1.0-beta.304 + esbuild 0.28.2（修 requestMode `(void 0\|\|(i={}))` 未声明全局崩溃 + esbuild 0.25.4 minify 降级 bug；官方仍钉 beta.303/0.25.4） | 3e29859c26 | ❌ 截至 2026-09-25 官方 package.json 未动 | 保留 |
-| 关闭 xterm colorSchemeQuery（kitty/Contour 996n 查询与 DECSET 2031 推送 → 远程链路应答竞态回显字面 `997;1n`；官方 terminal-init.ts 无此选项） | d99e44b615 | ❌ | 保留 |
+| xterm 6.1.0-beta.304 + esbuild 0.28.2（修 requestMode `(void 0\|\|(i={}))` 未声明全局崩溃 + esbuild 0.25.4 minify 降级 bug；官方仍钉 beta.303/0.25.4，2026-09-29 核对未动） | 3e29859c26 | ❌ | 保留 |
+| 关闭 xterm colorSchemeQuery（kitty/Contour 996n 查询与 DECSET 2031 推送 → 远程链路应答竞态回显字面 `997;1n`；2026-09-29 rebase 时官方重构 terminal-init.ts 把 createTerminal 选项收进 `openTerminal` 助手，选项已重放进新位置） | d99e44b615 | ❌ | 保留 |
 | 终端字体门（document-shell 等 @font-face 解码完 Symbols Nerd Font Mono 才放行首帧，3s 上限） | 6077c275b2 | ❌ | 保留 |
-| 棘轮 pin 与 lockfile 重录（route-parity/payload-hash/ratchet 记录随 rebase 更新） | 742cb943a9 | —（随每次 rebase 机械重录） | 机械重录 |
+| 硬件键门控走 `hostOs()` 封口（官方新 census `keyboard-geometry-host-os-census.test.ts` 禁止键盘相邻代码读 `Platform.OS`，行为等价仅合规口径） | e50287b27b | —（官方政策，我们适配） | 保留 |
+| 棘轮 pin 与 lockfile 重录（route-parity/payload-hash/ratchet 记录随 rebase 更新） | 每代一个重录提交 | —（随每次 rebase 机械重录） | 机械重录 |
 | port-custom-commits 技能文档本身 | 03187f73b4 | — | 保留 |
 
 判断"官方是否覆盖"的方法：`git grep -l "dispatchKeyEvent\|onKeyPreIme\|KEYCODE_DPAD" upstream/main -- mobile/`，
-并读官方 mobile 提交的 commit message（`git log --oneline caa465d1da..upstream/main -- mobile/`）。
+并读官方 mobile 提交的 commit message（`git log --oneline b482b4d3b4..upstream/main -- mobile/`，每次 rebase 后把起点换成当次的新 base）。
+注意官方政策的 census 测试（如 keyboard-geometry-host-os-census）也会在 full vitest 里拦我们的实现，
+按其认可封口改写后重录受影响的棘轮 pin——这算"重写到官方新结构之上"，不算被覆盖。
 
 ## 流程
 
