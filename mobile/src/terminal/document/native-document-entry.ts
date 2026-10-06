@@ -10,4 +10,13 @@ import { createTerminalDocument } from './create-terminal-document'
  * This file exists to be bundled. It is the entry `build-terminal-document-script.mjs` hands to
  * esbuild, and the only module in the document with a statement at its top level.
  */
-createTerminalDocument()
+const font = '300 14px "Symbols Nerd Font Mono"'
+const start = () => createTerminalDocument()
+
+// The existing web-ready gate holds host frames until the glyph atlas can use the font.
+if (document.fonts && !document.fonts.check(font)) {
+  const timeout = new Promise<void>((resolve) => setTimeout(resolve, 3000))
+  void Promise.race([document.fonts.load(font), timeout]).then(start, start)
+} else {
+  start()
+}
