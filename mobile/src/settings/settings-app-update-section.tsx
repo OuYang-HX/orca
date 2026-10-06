@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   appUpdateChecker,
-  installedAppVersion,
+  installedAppVersionLabel,
   openAppUpdate,
   useAppUpdateState
 } from '../app-update/app-update-runtime'
@@ -39,7 +39,7 @@ export function SettingsAppUpdateSection() {
   const checkStatus: AppUpdateCheckRowStatus = state.checking ? 'checking' : (result ?? 'idle')
   return (
     <AppUpdateSettingsRows
-      installedVersion={installedAppVersion}
+      installedVersion={installedAppVersionLabel}
       available={state.available}
       lastCheckedAt={state.lastCheckedAt}
       now={now}

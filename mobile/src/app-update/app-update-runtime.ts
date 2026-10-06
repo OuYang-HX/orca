@@ -10,14 +10,29 @@ import {
 import { appStoreUpdateSource } from './app-store-update-source'
 import { createAppUpdateChecker, type AppUpdateState } from './app-update-checker'
 import type { AppUpdateSource } from './app-update-source'
-import { githubReleaseUpdateSource } from './github-release-update-source'
+import {
+  createGithubReleaseUpdateSource,
+  githubReleaseUpdateSource
+} from './github-release-update-source'
 
 // expoConfig is embedded binary manifest because app does not use expo-updates; SDK 55 removed nativeAppVersion. Revisit version source if adopting OTA updates.
 export const installedAppVersion: string | null = Constants.expoConfig?.version ?? null
+const configuredRepository = Constants.expoConfig?.extra?.androidUpdateRepository
+const androidRepository =
+  typeof configuredRepository === 'string' && configuredRepository ? configuredRepository : null
+const preferencesChannel = Platform.OS === 'android' ? (androidRepository ?? undefined) : undefined
+const buildLabel = Platform.OS === 'android' ? Constants.expoConfig?.extra?.androidBuildLabel : null
+export const installedAppVersionLabel =
+  installedAppVersion && typeof buildLabel === 'string' && buildLabel
+    ? `${installedAppVersion} (${buildLabel})`
+    : installedAppVersion
 
 /** The channel that installed this binary. */
 function resolveAppUpdateSource(): AppUpdateSource | null {
   if (Platform.OS === 'android') {
+    if (androidRepository) {
+      return createGithubReleaseUpdateSource((input, init) => fetch(input, init), androidRepository)
+    }
     return githubReleaseUpdateSource
   }
   if (Platform.OS === 'ios') {
@@ -40,9 +55,9 @@ export const appUpdateChecker = createAppUpdateChecker({
     })
     return () => subscription.remove()
   },
-  loadPreferences: loadAppUpdatePreferences,
-  saveCheck: saveAppUpdateCheck,
-  saveDismissedVersion: saveDismissedAppUpdateVersion
+  loadPreferences: () => loadAppUpdatePreferences(preferencesChannel),
+  saveCheck: (checkedAt, latest) => saveAppUpdateCheck(checkedAt, latest, preferencesChannel),
+  saveDismissedVersion: (version) => saveDismissedAppUpdateVersion(version, preferencesChannel)
 })
 
 export function useAppUpdateState(): AppUpdateState {
