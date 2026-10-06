@@ -7,7 +7,7 @@ import type {
 } from './terminal-live-input'
 import { useTerminalLiveInputFocus } from './use-terminal-live-input-focus'
 
-const platformRef = vi.hoisted(() => ({ os: 'android' as 'android' | 'ios' }))
+const platformRef = vi.hoisted<{ os: 'android' | 'ios' }>(() => ({ os: 'android' }))
 vi.mock('react-native', () => ({
   Platform: {
     get OS(): string {

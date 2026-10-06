@@ -15,9 +15,7 @@ declare class TerminalHwKeysModule extends NativeModule<TerminalHwKeysEvents> {
 }
 
 const TerminalHwKeys =
-  hostOs() === 'android'
-    ? requireNativeModule<TerminalHwKeysModule>('TerminalHwKeys')
-    : null
+  hostOs() === 'android' ? requireNativeModule<TerminalHwKeysModule>('TerminalHwKeys') : null
 
 const hardwareKeyEmitter = TerminalHwKeys
   ? new EventEmitter<TerminalHwKeysEvents>(TerminalHwKeys)

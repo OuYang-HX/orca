@@ -187,20 +187,19 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
       }
       void sendLiveTerminalInputRef.current(handle, bytes)
     })
-    // Why: the subscription lifetime matches the session route, not reactive values.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-  const { focusLiveInput, handleCaptureBlur, handleTerminalTap, resetLiveInputFocus } = useTerminalLiveInputFocus({
-    activeHandleRef,
-    canSend,
-    inputRef: liveInputRef,
-    keyboardHeight,
-    lifecycleIdentity: client,
-    lifecycleKey: JSON.stringify([hostId, worktreeId, connState]),
-    liveInputEnabled,
-    reopenFocusedInputWhenKeyboardHidden: reopensFocusedInputWhenKeyboardHidden(),
-    timerRef: liveInputFocusTimerRef
-  })
+  const { focusLiveInput, handleCaptureBlur, handleTerminalTap, resetLiveInputFocus } =
+    useTerminalLiveInputFocus({
+      activeHandleRef,
+      canSend,
+      inputRef: liveInputRef,
+      keyboardHeight,
+      lifecycleIdentity: client,
+      lifecycleKey: JSON.stringify([hostId, worktreeId, connState]),
+      liveInputEnabled,
+      reopenFocusedInputWhenKeyboardHidden: reopensFocusedInputWhenKeyboardHidden(),
+      timerRef: liveInputFocusTimerRef
+    })
   useFocusEffect(
     useCallback(() => {
       // Expo retains this route while pushed screens are visible.
@@ -227,7 +226,14 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
     }
     previousFocusHandleRef.current = activeHandle
     scheduleTerminalLiveInputFocus(liveInputFocusTimerRef, () => liveInputRef.current?.focus())
-  }, [activeHandle, canSend, keyboardHeight, liveInputEnabled, liveInputFocusTimerRef, liveInputRef])
+  }, [
+    activeHandle,
+    canSend,
+    keyboardHeight,
+    liveInputEnabled,
+    liveInputFocusTimerRef,
+    liveInputRef
+  ])
   return {
     ptyModesRef,
     terminalGestureInputBucketsRef,

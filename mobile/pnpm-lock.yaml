@@ -330,6 +330,9 @@ importers:
       '@orca/process-host':
         specifier: link:../src/packages/process-host
         version: link:../src/packages/process-host
+      '@expo/config-plugins':
+        specifier: 55.0.11
+        version: 55.0.11
       '@types/react':
         specifier: ~19.2.18
         version: 19.2.18
