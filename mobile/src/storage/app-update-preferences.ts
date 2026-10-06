@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { z } from 'zod'
 
-const LAST_CHECKED_AT_KEY = 'orca:appUpdate:lastCheckedAt'
-const LATEST_KEY = 'orca:appUpdate:latest'
-const DISMISSED_VERSION_KEY = 'orca:appUpdate:dismissedVersion'
+function updateKey(field: string, channel?: string): string {
+  return `orca:appUpdate${channel ? `:${channel}` : ''}:${field}`
+}
 
 export type KnownAppUpdate = { readonly version: string; readonly url: string }
 
@@ -33,12 +33,12 @@ function parseLatest(raw: string | null): KnownAppUpdate | null {
   }
 }
 
-export async function loadAppUpdatePreferences(): Promise<AppUpdatePreferences> {
+export async function loadAppUpdatePreferences(channel?: string): Promise<AppUpdatePreferences> {
   try {
     const [[, checkedAt], [, latest], [, dismissed]] = await AsyncStorage.multiGet([
-      LAST_CHECKED_AT_KEY,
-      LATEST_KEY,
-      DISMISSED_VERSION_KEY
+      updateKey('lastCheckedAt', channel),
+      updateKey('latest', channel),
+      updateKey('dismissedVersion', channel)
     ])
     const lastCheckedAt = checkedAt === null ? null : Number(checkedAt)
     return {
@@ -52,13 +52,20 @@ export async function loadAppUpdatePreferences(): Promise<AppUpdatePreferences> 
   }
 }
 
-export async function saveAppUpdateCheck(checkedAt: number, latest: KnownAppUpdate | null) {
+export async function saveAppUpdateCheck(
+  checkedAt: number,
+  latest: KnownAppUpdate | null,
+  channel?: string
+) {
   await AsyncStorage.multiSet([
-    [LAST_CHECKED_AT_KEY, String(checkedAt)],
-    [LATEST_KEY, latest ? JSON.stringify(latest) : '']
+    [updateKey('lastCheckedAt', channel), String(checkedAt)],
+    [updateKey('latest', channel), latest ? JSON.stringify(latest) : '']
   ])
 }
 
-export async function saveDismissedAppUpdateVersion(version: string): Promise<void> {
-  await AsyncStorage.setItem(DISMISSED_VERSION_KEY, version)
+export async function saveDismissedAppUpdateVersion(
+  version: string,
+  channel?: string
+): Promise<void> {
+  await AsyncStorage.setItem(updateKey('dismissedVersion', channel), version)
 }
