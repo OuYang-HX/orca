@@ -5,15 +5,17 @@ import { colors, radii, spacing } from '../theme/mobile-theme'
 /** Home's update notice, drawn in the host card's frame so it reads as part of that list. */
 export function AppUpdateCard(props: {
   version: string
+  requiresCustomBuild?: boolean
   onPress: () => void
   onDismiss: () => void
 }) {
-  const title = `Orca ${props.version} is available`
+  const title = `${props.requiresCustomBuild ? 'Official Orca' : 'Orca'} ${props.version} is available`
+  const action = props.requiresCustomBuild ? 'view release notes' : 'tap to update'
   return (
     <View style={styles.card}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${title}, tap to update`}
+        accessibilityLabel={`${title}, ${action}`}
         style={({ pressed }) => [styles.cardMain, pressed && styles.cardPressed]}
         onPress={props.onPress}
       >
@@ -24,8 +26,10 @@ export function AppUpdateCard(props: {
           <Text style={styles.title} numberOfLines={1}>
             {title}
           </Text>
-          <Text style={styles.subtitle} numberOfLines={1}>
-            Tap to update
+          <Text style={styles.subtitle} numberOfLines={props.requiresCustomBuild ? 2 : 1}>
+            {props.requiresCustomBuild
+              ? 'Rebuild your custom APK · View release notes'
+              : 'Tap to update'}
           </Text>
         </View>
       </Pressable>

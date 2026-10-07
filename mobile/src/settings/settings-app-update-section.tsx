@@ -3,6 +3,7 @@ import {
   appUpdateChecker,
   installedAppVersionLabel,
   openAppUpdate,
+  requiresCustomBuild,
   useAppUpdateState
 } from '../app-update/app-update-runtime'
 import { AppUpdateSettingsRows, type AppUpdateCheckRowStatus } from './app-update-settings-rows'
@@ -41,6 +42,7 @@ export function SettingsAppUpdateSection() {
   return (
     <AppUpdateSettingsRows
       installedVersion={installedAppVersionLabel}
+      requiresCustomBuild={requiresCustomBuild}
       available={state.available}
       lastCheckedAt={state.lastCheckedAt}
       now={now}

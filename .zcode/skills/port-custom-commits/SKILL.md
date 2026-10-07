@@ -35,7 +35,7 @@ description: 把 orca 个人仓的自定义提交移植到官方最新代码：�
 | 平台门控 | 官方 `hostOs()` 接口 | 沿用官方封口，避免自建平台判断 |
 | route-parity 等源码指纹测试 | 已移除旧自定义 pin | 官方已删除这类测试，不恢复已删除文件，也不保留旧重录提交 |
 | 依赖锁文件 | 仅增加插件的直接依赖索引 | 原生插件仍需要 `@expo/config-plugins`，其他依赖保持官方版本 |
-| Android 定制包版本与更新来源 | app.json 的版本/构建标签/仓库配置、官方更新来源工厂与缓存的可选参数 | main 的版本可能落后于发布标签；沿用官方检查器，定制包只检查个人仓，缓存按仓库隔离 |
+| Android 定制包版本与官方更新提醒 | app.json 的版本/构建标签、首页与设置页的重建说明 | 沿用官方更新来源和缓存；发现官方新版本后同步源码并保留自定义功能重建，不要求个人仓发布 APK |
 
 ## 同步流程
 
@@ -59,9 +59,11 @@ description: 把 orca 个人仓的自定义提交移植到官方最新代码：�
    - 所有测试及 app 启动设置 `ORCA_BACKGROUND_LAUNCH=1`；桌面渲染验证遵循项目的后台规则。
 8. 打包前检查官方 `mobile-android-v*` 发布标签及其 app.json；不能仅凭 main 的版本号
    判断发布版本。版本号至少对齐已纳入代码的官方发布，versionCode 大于平板旧包与该官方包，
-   每次定制交付递增。保留 app.json extra 中的 `androidUpdateRepository: OuYang-HX/orca`，
-   递增 `androidBuildLabel`（如 `oyhx.1`）；它只用于显示，比较仍使用数字版本。
-   官方包与定制包的检查时间、最新版本和忽略状态按仓库隔离，不复用旧官方缓存。
+   每次定制交付递增。递增 app.json extra 的 `androidBuildLabel`（如 `oyhx.2`）；
+   它只用于显示，比较仍使用已纳入的官方数字版本。必须保留 `stablyai/orca` 官方更新来源，
+   不改成个人仓检查，也不按 APK 构建时间判断官方源码新旧。
+   提醒应说明“官方有新版本，需要重建定制 APK”，点击查看发布说明。
+   用户收到提醒后再按本流程同步最新官方源码、移除已被官方覆盖的补丁、打包并覆盖安装。
    在 mobile 用 `expo prebuild --platform android --no-install` 生成工程。
    使用本机 JDK 17 与 SDK，执行
    `./gradlew :expo-terminal-hwkeys:testReleaseUnitTest :app:assembleRelease`。
@@ -83,19 +85,22 @@ Kotlin 按键编码单测 13 项通过；针对官方基线的新增代码质量
 
 同日修复版本与更新渠道：官方 Android `0.0.52` 发布标签仅比共同基线多一个版本递增提交，
 而本次 main 有其后的 827 个提交，app.json 却仍是 `0.0.51` / `18`。
-现对齐 `0.0.52`，设置 `androidBuildLabel: oyhx.1` 与个人仓更新来源，
-复用官方工厂/检查器并按仓库隔离缓存；相关回归 48 项、mobile 类型及测试类型检查通过，
-新增代码质量检查通过。
+版本已对齐 `0.0.52`。个人仓更新来源策略已取缔：用户明确要求定制 APK 继续提醒官方
+新版本，再同步官方代码重建。更新来源与缓存恢复官方实现，只保留定制显示与重建说明。
+最新 `androidBuildLabel` 为 `oyhx.2`，versionCode `21`；官方 `0.0.53` 的模拟发布可被
+定制 `0.0.52` 检测到，首页/设置提醒明确要求重建；相关回归 63 项、首页/设置专项 42 项通过。
+mobile 类型检查、测试类型检查与新增代码质量门通过。官方接口实测 `0.0.51` 可识别官方
+`0.0.52` 发布，`0.0.52` 返回当前版本。
 
-arm64 release 构建成功：`com.stably.orca.mobile`，版本 `0.0.52` / versionCode `20`，
-大小 63575558 字节；签名与平板旧包一致，`adb install -r` 成功；
+arm64 release 构建成功：`com.stably.orca.mobile`，版本 `0.0.52` / versionCode `21`，
+大小 63575466 字节；签名与平板旧包一致，`adb install -r` 成功；
 安装后启动存活、主机连接与原有数据保留、无本次 AndroidRuntime/ReactNativeJS 错误。
-真机设置页显示 `Version 0.0.52 (oyhx.1)`，手动检查显示 `Up to date`，
-首页没有官方升级提示。
+2026-10-08 真机设置页显示 `Version 0.0.52 (oyhx.2)` 与 `Check official updates`；
+手动检查显示 `No newer official release`，当前已对齐官方 `0.0.52`，相同版本不会误报。
 本次未向用户正在运行的终端发送 Ctrl+C，按键语义由 Kotlin 单测和 JS 回归覆盖。
 实际硬件按键手感、终端内完整交互仍需在空闲会话里确认。
 
-APK SHA-256：`bec806d6af3a1c5b53457d69305dd4d950f119197cec9f62297f5896f1941c09`。
+APK SHA-256：`9a953eaf7ce120fbc9311e59116f01686c181050f5e0ae0d6e824e8a03c8fc9e`。
 
 ## 退出条件
 
