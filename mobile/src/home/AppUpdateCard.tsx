@@ -7,23 +7,37 @@ import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
 
 export function AppUpdateCard(props: {
   version: string
+  requiresCustomBuild?: boolean
   onPress: () => void
   onDismiss: () => void
 }) {
   const t = useMobileTranslation()
   useMobileColorScheme()
-  const title = t('home.appUpdateCard.title', 'Orca {{version}} is available', {
-    version: props.version
-  })
+  // A custom APK can only point at the official release notes; it never updates itself.
+  const customBuild = props.requiresCustomBuild === true
+  const title = customBuild
+    ? t('home.appUpdateCard.officialTitle', 'Official Orca {{version}} is available', {
+        version: props.version
+      })
+    : t('home.appUpdateCard.title', 'Orca {{version}} is available', {
+        version: props.version
+      })
+  const actionLabel = customBuild
+    ? t('home.appUpdateCard.viewNotes', 'View notes')
+    : t('home.appUpdateCard.update', 'Update')
   return (
     <View style={styles.card}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={t(
-          'home.appUpdateCard.updateAccessibilityLabel',
-          'Orca {{version}} is available, tap to update',
-          { version: props.version }
-        )}
+        accessibilityLabel={customBuild
+          ? t('home.appUpdateCard.officialAccessibilityLabel', 'Official Orca {{version}} is available, view release notes', {
+              version: props.version
+            })
+          : t(
+              'home.appUpdateCard.updateAccessibilityLabel',
+              'Orca {{version}} is available, tap to update',
+              { version: props.version }
+            )}
         style={({ pressed }) => [styles.cardMain, pressed && styles.cardPressed]}
         onPress={props.onPress}
       >
@@ -32,7 +46,7 @@ export function AppUpdateCard(props: {
           {title}
         </Text>
         <View style={styles.updateButton}>
-          <Text style={styles.updateLabel}>{t('home.appUpdateCard.update', 'Update')}</Text>
+          <Text style={styles.updateLabel}>{actionLabel}</Text>
         </View>
       </Pressable>
       <Pressable

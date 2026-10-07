@@ -2,6 +2,7 @@ import { undismissedAppUpdate } from '../app-update/app-update-checker'
 import {
   appUpdateChecker,
   openAppUpdate,
+  requiresCustomBuild,
   useAppUpdateState
 } from '../app-update/app-update-runtime'
 import { AppUpdateCard } from './AppUpdateCard'
@@ -14,6 +15,7 @@ export function MobileHomeAppUpdateCard() {
   return (
     <AppUpdateCard
       version={available.version}
+      requiresCustomBuild={requiresCustomBuild}
       onPress={() => openAppUpdate(available.url)}
       onDismiss={() => appUpdateChecker.dismiss(available.version)}
     />
