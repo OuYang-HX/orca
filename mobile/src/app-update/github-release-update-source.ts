@@ -3,6 +3,7 @@ import { compareAppVersions } from '../../../src/shared/app-version'
 import type { AppUpdateCheckResult, AppUpdateSource } from './app-update-source'
 import { isNewerReleaseVersion } from './app-update-source'
 
+const REPO_API = 'https://api.github.com/repos/stablyai/orca'
 // Why tag refs, not releases.atom or /releases?per_page=100: both are newest-first windows that a
 // run of desktop releases fills, pushing the newest mobile release out and reading as "current".
 // The release `prerelease` flag is not a filter: every mobile-android-v* release is published as one.
@@ -37,14 +38,10 @@ export function installableReleaseUrl(release: unknown): string | null {
     : null
 }
 
-export function createGithubReleaseUpdateSource(
-  fetchImpl: Fetch,
-  repository = 'stablyai/orca'
-): AppUpdateSource {
-  const repoApi = `https://api.github.com/repos/${repository}`
+export function createGithubReleaseUpdateSource(fetchImpl: Fetch): AppUpdateSource {
   return {
     async check(installedVersion, signal): Promise<AppUpdateCheckResult> {
-      const refsReply = await fetchImpl(`${repoApi}/git/matching-refs/tags/${TAG_PREFIX}`, {
+      const refsReply = await fetchImpl(`${REPO_API}/git/matching-refs/tags/${TAG_PREFIX}`, {
         signal
       })
       if (!refsReply.ok) {
@@ -56,7 +53,7 @@ export function createGithubReleaseUpdateSource(
         .slice(0, MAX_RELEASE_PROBES)
       for (const version of candidates) {
         const releaseReply = await fetchImpl(
-          `${repoApi}/releases/tags/${encodeURIComponent(`${TAG_PREFIX}${version}`)}`,
+          `${REPO_API}/releases/tags/${encodeURIComponent(`${TAG_PREFIX}${version}`)}`,
           { signal }
         )
         if (releaseReply.status === 404) {

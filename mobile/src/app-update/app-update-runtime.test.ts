@@ -48,34 +48,50 @@ describe('embedded update channel', () => {
   })
   afterEach(() => vi.unstubAllGlobals())
 
-  it('keeps a numeric installed version and routes custom Android checks and storage to the fork', async () => {
-    mocks.config.extra = { androidUpdateRepository: 'OuYang-HX/orca', androidBuildLabel: 'oyhx.1' }
+  it('detects the next official release from a custom APK and keeps its label out of version comparisons', async () => {
+    mocks.config.extra = { androidUpdateRepository: 'OuYang-HX/orca', androidBuildLabel: 'oyhx.2' }
     const { runtime, deps } = await loadRuntime()
-    expect(runtime.installedAppVersionLabel).toBe('0.0.52 (oyhx.1)')
+    expect(runtime.installedAppVersionLabel).toBe('0.0.52 (oyhx.2)')
+    expect(runtime.requiresCustomBuild).toBe(true)
     expect(deps.installedVersion).toBe('0.0.52')
-    await deps.source?.check('0.0.52', new AbortController().signal)
+    const url = 'https://github.com/stablyai/orca/releases/tag/mobile-android-v0.0.53'
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify([{ ref: 'refs/tags/mobile-android-v0.0.53' }]))
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ draft: false, html_url: url, assets: [{ name: 'orca.apk' }] })
+        )
+      )
+    await expect(deps.source?.check('0.0.52', new AbortController().signal)).resolves.toEqual({
+      kind: 'available',
+      version: '0.0.53',
+      url
+    })
     expect(fetch).toHaveBeenCalledWith(
-      'https://api.github.com/repos/OuYang-HX/orca/git/matching-refs/tags/mobile-android-v',
+      'https://api.github.com/repos/stablyai/orca/git/matching-refs/tags/mobile-android-v',
       expect.anything()
     )
     await deps.loadPreferences()
     await deps.saveCheck(100, null)
     await deps.saveDismissedVersion('0.0.53')
-    expect(mocks.loadPreferences).toHaveBeenCalledWith('OuYang-HX/orca')
-    expect(mocks.saveCheck).toHaveBeenCalledWith(100, null, 'OuYang-HX/orca')
-    expect(mocks.saveDismissedVersion).toHaveBeenCalledWith('0.0.53', 'OuYang-HX/orca')
+    expect(mocks.loadPreferences).toHaveBeenCalledWith()
+    expect(mocks.saveCheck).toHaveBeenCalledWith(100, null)
+    expect(mocks.saveDismissedVersion).toHaveBeenCalledWith('0.0.53')
   })
 
   it('preserves the official Android channel when no custom repository is configured', async () => {
     const { runtime, deps } = await loadRuntime()
     expect(runtime.installedAppVersionLabel).toBe('0.0.52')
+    expect(runtime.requiresCustomBuild).toBe(false)
     await deps.source?.check('0.0.52', new AbortController().signal)
     expect(fetch).toHaveBeenCalledWith(
       'https://api.github.com/repos/stablyai/orca/git/matching-refs/tags/mobile-android-v',
       expect.anything()
     )
     await deps.loadPreferences()
-    expect(mocks.loadPreferences).toHaveBeenCalledWith(undefined)
+    expect(mocks.loadPreferences).toHaveBeenCalledWith()
   })
 
   it('keeps iOS on the App Store with its existing version label and preferences', async () => {
@@ -83,6 +99,7 @@ describe('embedded update channel', () => {
     mocks.config.extra = { androidUpdateRepository: 'OuYang-HX/orca', androidBuildLabel: 'oyhx.1' }
     const { runtime, deps } = await loadRuntime()
     expect(runtime.installedAppVersionLabel).toBe('0.0.52')
+    expect(runtime.requiresCustomBuild).toBe(false)
     vi.mocked(fetch).mockResolvedValueOnce(new Response('{"results":[]}'))
     await deps.source?.check('0.0.52', new AbortController().signal)
     expect(fetch).toHaveBeenCalledWith(
@@ -90,6 +107,6 @@ describe('embedded update channel', () => {
       expect.anything()
     )
     await deps.loadPreferences()
-    expect(mocks.loadPreferences).toHaveBeenCalledWith(undefined)
+    expect(mocks.loadPreferences).toHaveBeenCalledWith()
   })
 })
