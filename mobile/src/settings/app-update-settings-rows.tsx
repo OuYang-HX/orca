@@ -25,6 +25,7 @@ function checkRowValue(status: AppUpdateCheckRowStatus, lastCheckedAt: number | 
 /** Settings' version row and manual check; the update row stays after the home card is dismissed. */
 export function AppUpdateSettingsRows(props: {
   installedVersion: string | null
+  requiresCustomBuild?: boolean
   available: KnownAppUpdate | null
   lastCheckedAt: number | null
   now: number
@@ -32,17 +33,25 @@ export function AppUpdateSettingsRows(props: {
   onUpdate: (url: string) => void
   onCheck: () => void
 }) {
-  const checkValue = checkRowValue(props.checkStatus, props.lastCheckedAt, props.now)
+  const checkValue =
+    props.requiresCustomBuild && props.checkStatus === 'up-to-date'
+      ? 'No newer official release'
+      : checkRowValue(props.checkStatus, props.lastCheckedAt, props.now)
+  const checkLabel = props.requiresCustomBuild ? 'Check official updates' : 'Check for updates'
   const { available, installedVersion, onUpdate } = props
+  const updateLabel =
+    available && props.requiresCustomBuild
+      ? `Official Orca ${available.version} · Rebuild custom APK`
+      : `Update to Orca ${available?.version}`
   const versionRow = available ? (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Update to Orca ${available.version}`}
+      accessibilityLabel={updateLabel}
       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
       onPress={() => onUpdate(available.url)}
     >
-      <Text style={styles.rowLabel}>Update to Orca {available.version}</Text>
-      <Text style={styles.actionValue}>Update</Text>
+      <Text style={styles.rowLabel}>{updateLabel}</Text>
+      <Text style={styles.actionValue}>{props.requiresCustomBuild ? 'Details' : 'Update'}</Text>
     </Pressable>
   ) : installedVersion ? (
     <View style={styles.row}>
@@ -55,13 +64,13 @@ export function AppUpdateSettingsRows(props: {
       {versionRow && <View style={styles.separator} />}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Check for updates, ${checkValue}`}
+        accessibilityLabel={`${checkLabel}, ${checkValue}`}
         accessibilityState={{ busy: props.checkStatus === 'checking' }}
         disabled={props.checkStatus === 'checking'}
         style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
         onPress={props.onCheck}
       >
-        <Text style={styles.rowLabel}>Check for updates</Text>
+        <Text style={styles.rowLabel}>{checkLabel}</Text>
         <Text style={styles.rowValue}>{checkValue}</Text>
       </Pressable>
     </View>

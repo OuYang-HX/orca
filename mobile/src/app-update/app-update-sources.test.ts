@@ -49,34 +49,6 @@ describe('version compare', () => {
 })
 
 describe('GitHub release source (Android sideload)', () => {
-  it('checks and opens releases from the configured repository', async () => {
-    const repoApi = 'https://api.github.com/repos/OuYang-HX/orca'
-    const refsUrl = `${repoApi}/git/matching-refs/tags/mobile-android-v`
-    const nextReleaseUrl = `${repoApi}/releases/tags/mobile-android-v0.0.53`
-    const page = 'https://github.com/OuYang-HX/orca/releases/tag/mobile-android-v0.0.53'
-    const { fetchImpl, requested } = fakeFetch({
-      [refsUrl]: { status: 200, body: [{ ref: 'refs/tags/mobile-android-v0.0.53' }] },
-      [nextReleaseUrl]: {
-        status: 200,
-        body: { draft: false, html_url: page, assets: [{ name: 'orca-custom.apk' }] }
-      }
-    })
-    await expect(
-      createGithubReleaseUpdateSource(fetchImpl, 'OuYang-HX/orca').check('0.0.52', signal)
-    ).resolves.toEqual({ kind: 'available', version: '0.0.53', url: page })
-    expect(requested).toEqual([refsUrl, nextReleaseUrl])
-  })
-
-  it('reports current when the configured repository has no Android release tags', async () => {
-    const refsUrl =
-      'https://api.github.com/repos/OuYang-HX/orca/git/matching-refs/tags/mobile-android-v'
-    const { fetchImpl, requested } = fakeFetch({ [refsUrl]: { status: 200, body: [] } })
-    await expect(
-      createGithubReleaseUpdateSource(fetchImpl, 'OuYang-HX/orca').check('0.0.52', signal)
-    ).resolves.toEqual({ kind: 'current' })
-    expect(requested).toEqual([refsUrl])
-  })
-
   it('reads every mobile-android tag from the recorded refs', () => {
     const versions = parseMobileAndroidTagVersions(tagRefs)
     expect(versions).toHaveLength(24)

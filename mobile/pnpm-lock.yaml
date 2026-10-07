@@ -323,6 +323,9 @@ importers:
         specifier: ~4.6.7
         version: 4.6.7
     devDependencies:
+      '@expo/config-plugins':
+        specifier: 55.0.11
+        version: 55.0.11(supports-color@8.1.1)
       '@orca/process-host':
         specifier: link:../src/packages/process-host
         version: link:../src/packages/process-host

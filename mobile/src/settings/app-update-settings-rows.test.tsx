@@ -24,6 +24,7 @@ describe('AppUpdateSettingsRows', () => {
     available?: { version: string; url: string } | null
     lastCheckedAt?: number | null
     checkStatus?: AppUpdateCheckRowStatus
+    requiresCustomBuild?: boolean
   }) {
     const onUpdate = vi.fn()
     const onCheck = vi.fn()
@@ -31,6 +32,7 @@ describe('AppUpdateSettingsRows', () => {
       renderer = create(
         createElement(AppUpdateSettingsRows, {
           installedVersion: '0.0.48',
+          requiresCustomBuild: opts.requiresCustomBuild,
           available: opts.available ?? null,
           lastCheckedAt: opts.lastCheckedAt ?? null,
           now: NOW,
@@ -86,5 +88,30 @@ describe('AppUpdateSettingsRows', () => {
     expect(render({ checkStatus: 'up-to-date' }).texts.at(-1)).toBe('Up to date')
     act(() => renderer?.unmount())
     expect(render({ checkStatus: 'failed' }).texts.at(-1)).toBe("Couldn't check")
+  })
+
+  it('offers official release details and a rebuild instruction for a custom APK', () => {
+    const { texts, pressables, onUpdate } = render({
+      requiresCustomBuild: true,
+      available: {
+        version: '0.0.53',
+        url: 'https://github.com/stablyai/orca/releases/tag/mobile-android-v0.0.53'
+      }
+    })
+    expect(texts).toEqual([
+      'Official Orca 0.0.53 · Rebuild custom APK',
+      'Details',
+      'Check official updates',
+      'Never'
+    ])
+    act(() => pressables[0].props.onPress())
+    expect(onUpdate).toHaveBeenCalledWith(
+      'https://github.com/stablyai/orca/releases/tag/mobile-android-v0.0.53'
+    )
+  })
+
+  it('says no newer official release after a custom APK successfully checks the official channel', () => {
+    const { texts } = render({ requiresCustomBuild: true, checkStatus: 'up-to-date' })
+    expect(texts).toEqual(['Version 0.0.48', 'Check official updates', 'No newer official release'])
   })
 })
