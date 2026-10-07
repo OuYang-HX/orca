@@ -69,7 +69,12 @@ description: 把 orca 个人仓的自定义提交移植到官方最新代码：�
    `./gradlew :expo-terminal-hwkeys:testReleaseUnitTest :app:assembleRelease`。
    仅交付 arm64 平板时可带 `-PreactNativeArchitectures=arm64-v8a`。
 9. 核对目标设备型号、APK 包名/版本/签名/摘要，用指定串号 `adb -s ... install -r` 更新，
-   不卸载应用或删除配对数据。构建产物复制到桌面；移动硬盘已挂载时也复制一份。
+   不卸载应用或删除配对数据。构建产物复制到桌面；NAS/共享磁盘已挂载时也交付一份。
+   NAS 的安装包目录每次只保留一个 Orca APK，固定命名为 `orca-latest.apk`，
+   附带 `orca-latest.apk.sha256` 与记录版本、构建号、架构、源码提交的 `orca-latest.txt`。
+   先写临时文件并核对摘要，再替换最新包，最后清理旧 Orca APK 与对应旧校验文件。
+   不保留日期名、测试名或其他版本的重复 Orca 包；清理范围按包名
+   `com.stably.orca.mobile` 核对，其他应用的安装包保留。挂载地址只留在本机配置。
 10. 真机冒烟：先记 PID，再注入方向键、Ctrl+C 与普通字母，确认 PID 未变且无本次崩溃。
     方向键用 `input keyevent --source 769 19`；Ctrl+C 用 `input keycombination 113 31`。
     只向空闲测试终端注入组合键，避免打断用户正在运行的任务；实际终端语义需单独回归。
