@@ -107,8 +107,11 @@ arm64-v8a release 构建成功：`com.stably.orca.mobile` `0.0.55 (oyhx.3)` / ve
 DEX 内含 `terminalhwkeys`、JS bundle 含 `TerminalHwKeys`/`setSubmitInterceptEnabled`。
 `adb install -r` 返回 Success，包管理器确认 `0.0.55` / `22`（原配对数据保留）；
 启动后进程存活、`AndroidRuntime:E` 与 `ReactNativeJS:E` 均为空。
-平板本代处于图案锁屏，方向键/Ctrl+C/字母三组注入探针未执行，解锁后需补跑；
-按键编码语义由 Kotlin 单测覆盖。
+真机三组探针（解锁后补跑，全程 PID 18153 未变、`AndroidRuntime:E`/`ReactNativeJS:E` 为空）：
+`input keyevent --source 769 19` → `TerminalHwKeys: dispatch keyCode=19 bytes=true`；
+`input keycombination 113 31` → `dispatch keyCode=31 ctrl=true bytes=true`；
+普通字母 `input keyevent --source 769 31` → 无 dispatch 行（未拦截，符合设计）。
+主页无终端时拦截关闭，探针需在会话终端页执行才有意义。
 
 交付：桌面 `orca-mobile-0.0.55-oyhx.3-code22-20261015-arm64.apk` + `.sha256`；
 NAS 安装包目录只保留 `orca-latest.apk` + `orca-latest.apk.sha256` + `orca-latest.txt`，
