@@ -20,8 +20,9 @@ description: 把 orca 个人仓的自定义提交移植到官方最新代码：�
 
 ## 自定义功能台账
 
-最近核对：2026-10-07，官方基线 `7e52bed4e0`，较旧基线 `b482b4d3b4` 新增 842 个提交。
-旧分支备份：`backup/mobile-tablet-hardware-keyboard-20261007`（本地与 origin）。
+最近核对：2026-10-15，官方基线 `dc146c09e2`，较旧基线 `7e52bed4e0` 新增 1209 个提交
+（其中 92 个触及 `mobile/`，唯一落在我们文件上的是 `50b3d2e34c` 终端快照修复）。
+旧分支备份：`backup/mobile-tablet-hardware-keyboard-20261015`（本地与 origin）。
 
 | 功能 | 当前增量 | 官方覆盖情况与处置 |
 | --- | --- | --- |
@@ -29,13 +30,13 @@ description: 把 orca 个人仓的自定义提交移植到官方最新代码：�
 | 未聚焦 Enter/NumpadEnter/DPAD_CENTER | 原生实时 EditText 焦点判定、路由焦点门控、JS submit 接入 | 官方未覆盖，保留，防止 Android 焦点搜索误点离开会话 |
 | 硬键盘探测与切换标签/工作区后聚焦 | 原生设备探测、成功门控后记录 handle、官方聚焦调度器 | 官方未覆盖，保留；连接与标签条异步稳定前允许重试 |
 | 防止自然失焦打断硬键盘输入 | 官方聚焦 hook 的 Android blur 接入、主动关闭时短暂抑制 | 官方未覆盖，保留；iOS 不自动重开键盘 |
-| xterm beta.304 / addon 升级与 esbuild 0.28.2 钉版 | 已移除自定义版本差异 | 官方已采用 esbuild 0.28.2，并在 `8186ded0bd` 禁用 syntax minification 修复查询变量丢失，使用官方 beta.303 与 addon 版本 |
+| xterm / addon 升级与 esbuild 钉版 | 已移除自定义版本差异 | 官方已钉 `@xterm/xterm` 6.1.0-beta.304、esbuild 0.28.2、acorn 8.18.0，本代无需再钉 |
 | colorSchemeQuery 关闭 | `terminal-init.ts` 的 vtExtensions 选项 | 官方仍会答复颜色查询，保留以避免远程延迟回复回显 |
-| Nerd Font 图标与首次绘制等待 | 字体资产、HTML @font-face、native-document-entry 启动等待 | 官方未覆盖字体；改用官方 web-ready 门控，删除独立消息队列；失败或 3 秒超时仍启动 |
+| Nerd Font 图标与首次绘制等待 | 字体资产、HTML @font-face、native-document-entry 启动等待 | 官方字体栈已列出 `Symbols Nerd Font Mono` 但不带资产；保留字体与官方 web-ready 门控，失败或 3 秒超时仍启动 |
 | 平台门控 | 官方 `hostOs()` 接口 | 沿用官方封口，避免自建平台判断 |
 | route-parity 等源码指纹测试 | 已移除旧自定义 pin | 官方已删除这类测试，不恢复已删除文件，也不保留旧重录提交 |
 | 依赖锁文件 | 仅增加插件的直接依赖索引 | 原生插件仍需要 `@expo/config-plugins`，其他依赖保持官方版本 |
-| Android 定制包版本与官方更新提醒 | app.json 的版本/构建标签、首页与设置页的重建说明 | 沿用官方更新来源和缓存；发现官方新版本后同步源码并保留自定义功能重建，不要求个人仓发布 APK |
+| Android 定制包版本与官方更新提醒 | app.json 的版本/构建标签（当前 `0.0.55` / `oyhx.3` / versionCode 22）、首页与设置页的重建说明 | 沿用官方更新来源和缓存；发现官方新版本后同步源码并保留自定义功能重建，不要求个人仓发布 APK |
 
 ## 同步流程
 
@@ -83,29 +84,37 @@ description: 把 orca 个人仓的自定义提交移植到官方最新代码：�
 
 ## 最近验证与交付
 
-2026-10-07：根目录 `pnpm tc`、mobile `tsc --noEmit`、测试类型检查均通过；
-测试类型检查包含 928 个文件，沿用官方 123 个历史例外。
-最终 mobile 全量测试 10072 项通过、6 项跳过；终端专项 650 项通过；
-Kotlin 按键编码单测 13 项通过；针对官方基线的新增代码质量检查全部通过。
+2026-10-15：官方基线 `7e52bed4e0` → `dc146c09e2`（+1209 提交），16 个 `[oyhx]` 提交全部重放。
+`git grep` 复核 `mobile/` 无 `dispatchKeyEvent`/`onKeyPreIme`/`KEYCODE_DPAD`/`colorSchemeQuery`，
+route-parity 类指纹测试官方已删除；冲突只有 4 处：`mobile/package.json`、`mobile/pnpm-lock.yaml`
+（官方 `@orca/process-host` 与我们的 `@expo/config-plugins` 并存）和 `mobile/app.json`
+的 `version`/`extra`/`android`（取定制值：`0.0.55` / `oyhx.3` / `22`）。
 
-同日修复版本与更新渠道：官方 Android `0.0.52` 发布标签仅比共同基线多一个版本递增提交，
-而本次 main 有其后的 827 个提交，app.json 却仍是 `0.0.51` / `18`。
-版本已对齐 `0.0.52`。个人仓更新来源策略已取缔：用户明确要求定制 APK 继续提醒官方
-新版本，再同步官方代码重建。更新来源与缓存恢复官方实现，只保留定制显示与重建说明。
-最新 `androidBuildLabel` 为 `oyhx.2`，versionCode `21`；官方 `0.0.53` 的模拟发布可被
-定制 `0.0.52` 检测到，首页/设置提醒明确要求重建；相关回归 63 项、首页/设置专项 42 项通过。
-mobile 类型检查、测试类型检查与新增代码质量门通过。官方接口实测 `0.0.51` 可识别官方
-`0.0.52` 发布，`0.0.52` 返回当前版本。
+验证：根目录 `pnpm tc` 通过；mobile `tsc --noEmit` 0 错误；`check:tests-typecheck` 棘轮通过
+（1009 个测试文件入程序，沿用官方 122 个历史例外）；mobile 全量测试 1011 个文件、
+10647 项通过、6 项跳过；`check:code-quality:changed -- upstream/main` 0 新增问题（23 个改动文件）；
+Kotlin 按键编码单测 13 项通过。
 
-arm64 release 构建成功：`com.stably.orca.mobile`，版本 `0.0.52` / versionCode `21`，
-大小 63575466 字节；签名与平板旧包一致，`adb install -r` 成功；
-安装后启动存活、主机连接与原有数据保留、无本次 AndroidRuntime/ReactNativeJS 错误。
-2026-10-08 真机设置页显示 `Version 0.0.52 (oyhx.2)` 与 `Check official updates`；
-手动检查显示 `No newer official release`，当前已对齐官方 `0.0.52`，相同版本不会误报。
-本次未向用户正在运行的终端发送 Ctrl+C，按键语义由 Kotlin 单测和 JS 回归覆盖。
-实际硬件按键手感、终端内完整交互仍需在空闲会话里确认。
+版本策略：官方 main 的 app.json 为 `0.0.55`，`mobile-android-v*` 最新发布标签仍是 `0.0.52`；
+定制包版本对齐到已纳入源码的 `0.0.55`，`androidBuildLabel` 递增为 `oyhx.3`，versionCode `22`
+（大于平板旧包 21 与官方包 20）。更新来源与缓存仍走官方 `stablyai/orca`，只保留定制显示与
+重建说明；官方发布新 Android 版本时首页/设置提醒重建，不再走个人仓。
 
-APK SHA-256：`9a953eaf7ce120fbc9311e59116f01686c181050f5e0ae0d6e824e8a03c8fc9e`。
+打包：`expo prebuild --platform android --clean --no-install` 重新生成工程
+（`with-terminal-hwkeys` 注入 MainActivity 已确认，生成物 versionCode 22 / versionName 0.0.55）；
+arm64-v8a release 构建成功：`com.stably.orca.mobile` `0.0.55 (oyhx.3)` / versionCode `22`，
+大小 63853430 字节，签名与平板旧包一致（Android Debug 证书 `fac61745…`），
+DEX 内含 `terminalhwkeys`、JS bundle 含 `TerminalHwKeys`/`setSubmitInterceptEnabled`。
+`adb install -r` 返回 Success，包管理器确认 `0.0.55` / `22`（原配对数据保留）；
+启动后进程存活、`AndroidRuntime:E` 与 `ReactNativeJS:E` 均为空。
+平板本代处于图案锁屏，方向键/Ctrl+C/字母三组注入探针未执行，解锁后需补跑；
+按键编码语义由 Kotlin 单测覆盖。
+
+交付：桌面 `orca-mobile-0.0.55-oyhx.3-code22-20261015-arm64.apk` + `.sha256`；
+NAS 安装包目录只保留 `orca-latest.apk` + `orca-latest.apk.sha256` + `orca-latest.txt`，
+其他应用安装包未动，两处副本摘要一致。
+
+APK SHA-256：`5dd0b3b7700cacd2bc224eef450f6a8a14902d830d1212fc11884f13cb140a62`。
 
 ## 退出条件
 
