@@ -70,7 +70,21 @@ internal class OrcaMobileWebShellView(
 
   init {
     addView(webView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+    active = this
   }
+
+  /**
+   * The shell on screen. MainActivity reads it to hand navigation keys to the page's terminal,
+   * because Android's WebView spends them on focus traversal before the page sees a keydown.
+   */
+  companion object {
+    @Volatile
+    @JvmField
+    var active: OrcaMobileWebShellView? = null
+  }
+
+  /** The WebView the routing dispatches into, and the route it is showing. */
+  internal fun webViewForKeys(): WebView? = webView
 
   fun setGenerationDirectory(value: String) {
     generationDirectory = value
@@ -214,6 +228,7 @@ internal class OrcaMobileWebShellView(
 
   /** Expo calls this once React Native is done with the view, and onRenderProcessGone calls it. */
   fun destroyWebView() {
+    if (active === this) active = null
     val view = webView ?: return
     removeBridgeListener()
     loadState.documentEnded()
@@ -413,6 +428,9 @@ internal class OrcaMobileWebShellView(
       // After the rewrite as well as before it: the back-forward list is the page's, and the shell
       // gives it no way back to a document it has already replaced.
       view.clearHistory()
+      WebShellTerminalKeyRouting.resetPageSink()
+      // The page registers its key sink after its first render, so ask once it has had the time.
+      view.postDelayed({ WebShellTerminalKeyRouting.probePageSink(view) }, 1500)
       emit(loadState.finished())
     }
 

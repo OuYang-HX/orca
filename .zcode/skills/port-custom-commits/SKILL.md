@@ -129,9 +129,31 @@ Android 的 DPAD 焦点导航。修复：原生新增 `navigationInterceptEnable
 评审补充（已修）：两个原生开关原先用 `useEffect`，会话路由 blur 后仍挂载 → 标志残留 `true` 会全局
 吞键；已改为 `useFocusEffect` + cleanup（与 submit 拦截同构），失焦即关。
 
-APK SHA-256（`oyhx.5` 现行）：`f2b2fe1586d5d5a3db86f4fb51c905edd51c2557043e3a331c38e54358d3ec3c`。
-历史：初版 `oyhx.5` `517ac17fe73e7f3f306864160d7e50752a1aa1f0b25c0e0ed152b917a588f9e1`（未含失焦清理，
-已被取代）；`oyhx.4` `23a5f20979e3667972d6124e395aeee15d189899bdab19699b5b927b25ff3f05`。
+**同日二次定位（推翻上面那条）：** 本代上游把会话页从 RN 组件改成 **WebView 加载桌面 web bundle**
+（`app/h/[hostId]/session/[worktreeId].tsx` → `MobileWebShellScreen`），RN 侧硬件键逻辑只剩 `.web.tsx`
+路由使用，`hostOs()` 在页面里是 `'web'`，三处开关从未打开（设备实测 `gate … intercept=false nav=false
+submit=false`，三个 setter 一次未调用）。CDP 连上 WebView 后实测：焦点在 BODY 时方向键能到页面一次，
+随后 Android 的 DPAD 焦点遍历把焦点移到 BUTTON/DIV，此后按键不再派发 DOM；焦点在 xterm textarea 时
+`keydown/keyup/input/beforeinput` 全空，光标不动、`selectionStart` 被清。xterm 也不消费合成
+KeyboardEvent（`isTrusted`）。结论：只能在原生拦截。
+修复（`37804f1d87`）：`MainActivity` 对 `/session/` 路由吞掉方向键/Home/End/PgUp/PgDn/Tab（仅 ACTION_DOWN），
+`evaluateJavascript` 调用页面 sink `window.__orcaSendTerminalKey(keyCode)`；页面侧
+`useShellHardwareKeySink` 把它接到 `sendLiveTerminalInput`（走 `terminalInputSend` RPC），按键→字节映射复用
+`getTerminalLiveSpecialKeyBytes`。能力探测：只在页面存在 sink 时拦截，旧 bundle/首页一律放行（首键丢一次）。
+证据：CDP 注入假 sink 后连按 ↓，`calls=[20,21,22,20,20,20]` 且 `activeElement` 停在原 BUTTON 不动；
+Kotlin 单测 3 项、页面 sink 单测 4 项、mobile 全量 11176 项通过（`mobile-e2ee-v2-client-session` 的失败在
+未改动状态下同样存在，与本次无关）。
+生效条件：页面代码在桌面 web bundle 里（`out/mobile-web`，buildId `60ae182b…`，有进程级缓存）→ **必须
+重启桌面 Orca**，平板才会重新下载该 buildId 的 bundle；只装 APK 不改变行为。
+
+APK SHA-256（`oyhx.5` 现行）：`c345aa6e0c7e1bd4327595df493e604f05ad32fd3daddef87add7245aed36c26`。
+历史：`133f8fc8…`（含诊断日志）、`f2b2fe15…`（含失焦清理、无 web-shell 路由）、`517ac17f…`（初版）、
+`oyhx.4` `23a5f209…`（均已取代）。
+
+**操作顺序（必须）**：桌面端的 mobile web bundle 是进程级缓存（`bundled-mobile-web-bundle.ts`，注释明确
+"bundle 在本次安装生命周期内不可变"），资产按 manifest 哈希校验。在运行中的桌面上重建 `out/mobile-web`
+会让「旧 manifest + 新字节」同时存在，重启前重开页面可能报 `mobile_web_bundle_asset_changed`。
+所以升级流程固定为：**先重启桌面 Orca，再在平板上重开会话页**。
 
 ## 退出条件
 
