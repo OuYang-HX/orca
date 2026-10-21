@@ -120,13 +120,18 @@ NAS 安装包目录只保留 `orca-latest.apk` + `orca-latest.apk.sha256` + `orc
 （`251bbf7bb0`），buffered 终端下开关一直为 false → `MainActivity.dispatchKeyEvent` 落回系统 →
 Android 的 DPAD 焦点导航。修复：原生新增 `navigationInterceptEnabled`——终端标签页 + 已连接 +
 **当前无编辑框聚焦**时接管映射键（有编辑框时方向键仍归输入框）；JS 在 `activeSessionTab.type === 'terminal'`
-时开启。验证：mobile `tsc` 0 错误、session/terminal 359 文件 3381 项通过、质量门 0 新增问题、
-Kotlin 单测 14 项通过（新增 1 项覆盖新开关）、`install -r` 装到 `0.0.58`/`24`、首页注入三键
-PID 23164 不变且无崩溃。终端页方向键回归需在真实会话里按一次确认
-（`logcat -s TerminalHwKeys` 应出现 `dispatch keyCode=19`）。
+时开启。验证：mobile `tsc` 0 错误、session/terminal 359 文件 3381 项通过、质量门 0 新增问题、Kotlin 单测
+14 项通过（新增 1 项覆盖新开关：无编辑框聚焦 → 拦截；编辑框聚焦 → 放行；未映射键 → 放行）。
+装机：`install -r` 成功 → `0.0.58`/`24`；首页注入 ↑、↓、Ctrl+C、`c`（`--source 769` 硬键盘源）
+前后 PID 31290 不变，`logcat -s TerminalHwKeys` 无 dispatch，无 `AndroidRuntime`/`ReactNativeJS` 错误。
+终端页行为回归需在真实会话里按一次确认（`logcat -s TerminalHwKeys` 应出现 `dispatch keyCode=19`）。
 
-APK SHA-256（`oyhx.5`）：`517ac17fe73e7f3f306864160d7e50752a1aa1f0b25c0e0ed152b917a588f9e1`。
-上一版（`oyhx.4`）：`23a5f20979e3667972d6124e395aeee15d189899bdab19699b5b927b25ff3f05`。
+评审补充（已修）：两个原生开关原先用 `useEffect`，会话路由 blur 后仍挂载 → 标志残留 `true` 会全局
+吞键；已改为 `useFocusEffect` + cleanup（与 submit 拦截同构），失焦即关。
+
+APK SHA-256（`oyhx.5` 现行）：`f2b2fe1586d5d5a3db86f4fb51c905edd51c2557043e3a331c38e54358d3ec3c`。
+历史：初版 `oyhx.5` `517ac17fe73e7f3f306864160d7e50752a1aa1f0b25c0e0ed152b917a588f9e1`（未含失焦清理，
+已被取代）；`oyhx.4` `23a5f20979e3667972d6124e395aeee15d189899bdab19699b5b927b25ff3f05`。
 
 ## 退出条件
 

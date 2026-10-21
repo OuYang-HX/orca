@@ -159,22 +159,27 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
   const canCompose = inputGate.canCompose
   const canSend = inputGate.canSend && clientId !== null
   const liveInputEnabled = activeHandle ? liveInputTerminalHandles.has(activeHandle) : false
-  // Why: Android native EditText consumes arrow/escape hardware keys before
-  // onKeyPress sees them; MainActivity forwards those keys here instead.
-  useEffect(() => {
-    setTerminalHardwareKeysEnabled(
-      hostOs() === 'android' && liveInputEnabled && canSend && activeHandle !== null
-    )
-  }, [activeHandle, canSend, liveInputEnabled])
-  // Why: a buffered terminal has no focused capture field; without this gate the
-  // arrows fall through to Android focus navigation and hop between on-screen
-  // controls like Tab. The native side still yields to a focused editor.
+  // Why: a buffered terminal has no focused capture field, so its arrows would
+  // fall through to Android focus navigation and hop between on-screen controls
+  // like Tab. The native gate still yields to a focused editor.
   const terminalTabActive = activeSessionTab?.type === 'terminal'
-  useEffect(() => {
-    setTerminalNavigationInterceptEnabled(
-      hostOs() === 'android' && terminalTabActive && canSend && activeHandle !== null
-    )
-  }, [activeHandle, canSend, terminalTabActive])
+  // Why: Android native EditText consumes arrow/escape hardware keys before
+  // onKeyPress sees them; MainActivity forwards those keys here instead. The
+  // session route stays mounted while blurred, so the native flags must follow
+  // route focus — a stale `true` would swallow hardware keys app-wide.
+  useFocusEffect(
+    useCallback(() => {
+      if (hostOs() !== 'android') {
+        return
+      }
+      setTerminalHardwareKeysEnabled(liveInputEnabled && canSend && activeHandle !== null)
+      setTerminalNavigationInterceptEnabled(terminalTabActive && canSend && activeHandle !== null)
+      return () => {
+        setTerminalHardwareKeysEnabled(false)
+        setTerminalNavigationInterceptEnabled(false)
+      }
+    }, [activeHandle, canSend, liveInputEnabled, terminalTabActive])
+  )
   // Why: submit keys must guard from route focus, not from connection readiness —
   // an unfocused Enter during the connect window falls through to Android
   // focus-search, which clicks whatever Pressable gains focus (session exit).
