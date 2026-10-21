@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { sendTerminalLiveAccessoryRawBytes } from '../terminal/terminal-live-accessory-raw-send'
-import { shellHardwareKeyBytes } from '../terminal/shell-hardware-key-sink'
+import { shellHardwareKeyBytes } from '../terminal/shell-hardware-key-bytes'
 import { useHostClient } from '../transport/host-client-hooks'
-import { activeTerminalHandle } from './active-terminal-handle'
+import { setTerminalTabActive } from '../../modules/orca-mobile-web-shell/src'
+import { activeSessionTab } from './active-terminal-handle'
 import { sessionHandleFromPathname } from './session-handle-from-route'
 
 /**
@@ -26,13 +27,21 @@ export function useShellHardwareKeySend(
 
   useEffect(() => {
     activeTerminalRef.current = null
+    setTerminalTabActive(false)
     if (!client || worktree === null) {
       return
     }
     const unsubscribe = client.subscribe('session.tabs.subscribe', { worktree }, (payload) => {
-      activeTerminalRef.current = activeTerminalHandle(payload)
+      const active = activeSessionTab(payload)
+      activeTerminalRef.current = active.terminal
+      // Why: a non-terminal tab has nowhere to put an arrow, so the activity must keep it for the
+      // page instead of swallowing it.
+      setTerminalTabActive(active.isTerminal)
     })
-    return unsubscribe
+    return () => {
+      setTerminalTabActive(false)
+      unsubscribe()
+    }
   }, [client, worktree])
 
   return useCallback(

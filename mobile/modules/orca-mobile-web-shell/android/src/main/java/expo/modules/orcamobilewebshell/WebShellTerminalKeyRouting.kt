@@ -29,6 +29,14 @@ object WebShellTerminalKeyRouting {
       KeyEvent.KEYCODE_TAB
     )
 
+  /** Whether the page is showing a terminal tab; false until React Native has said it is. */
+  @Volatile private var terminalTabActive: Boolean = false
+
+  @JvmStatic
+  fun setTerminalTabActive(active: Boolean) {
+    terminalTabActive = active
+  }
+
   /** True for a session route, the only page that owns a terminal. */
   @JvmStatic
   internal fun isSessionRoute(url: String?): Boolean = url != null && url.contains("/session/")
@@ -45,6 +53,9 @@ object WebShellTerminalKeyRouting {
     val view = OrcaMobileWebShellView.active ?: return false
     if (!isSessionRoute(view.webViewForKeys()?.url)) return false
     if (!isRoutedKey(event.keyCode)) return false
+    // Why: a chat, markdown or file tab has nowhere to put an arrow, so the page keeps its own
+    // focus navigation there instead of losing the key to this route's terminal.
+    if (!terminalTabActive) return false
     // Down only: forwarding the up event too would double every sequence. The up is still
     // swallowed so traversal never acts on a key the page did not see.
     if (event.action == KeyEvent.ACTION_DOWN) {

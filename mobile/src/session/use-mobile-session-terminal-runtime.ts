@@ -213,7 +213,6 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
       }
     }, [activeHandle, canSend, liveInputEnabled, terminalTabActive])
   )
-  useShellHardwareKeySink(activeHandleRef, activeSessionTabTypeRef, sendLiveTerminalInputRef)
   // Why: submit keys must guard from route focus, not from connection readiness —
   // an unfocused Enter during the connect window falls through to Android
   // focus-search, which clicks whatever Pressable gains focus (session exit).

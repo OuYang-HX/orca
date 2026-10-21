@@ -146,8 +146,14 @@ Kotlin 单测 3 项、页面 sink 单测 4 项、mobile 全量 11176 项通过�
 生效条件：页面代码在桌面 web bundle 里（`out/mobile-web`，buildId `60ae182b…`，有进程级缓存）→ **必须
 重启桌面 Orca**，平板才会重新下载该 buildId 的 bundle；只装 APK 不改变行为。
 
-APK SHA-256（`oyhx.5` 现行）：`1637720e3856dbea73eb32223218673f5621ae2773ec755961f6f9dc4d38f812`。
-历史：`c345aa6e…`、`133f8fc8…`、`f2b2fe15…`、`517ac17f…`、`oyhx.4` `23a5f209…`（均已取代）。
+APK SHA-256（`oyhx.5` 现行）：`768773253c0f8fd21985ddef6282125e8a9cf78231b1fab9bdf7009d6c6fdca5`。
+历史：`1637720e…`、`c345aa6e…`、`133f8fc8…`、`f2b2fe15…`、`517ac17f…`、`oyhx.4` `23a5f209…`（均已取代）。
+
+**方向键最终形态（`de828d1ecd`）**：Activity 只在「`/session/` 路由 + RN 报告当前 tab 是终端」时接管
+（`setTerminalTabActive`），其余 tab 放行页面自身焦点导航。验证方式换成可观测的终端行为：在 Terminal 1
+用软键盘输入一条命令再提交，按硬件 ↑ 应回填该命令（实测出现 `dsh-tui`）。空历史 shell 里 ↑ 无变化、
+omp 这类全屏 TUI 可能不响应方向键，都属正常，不代表链路失败；链路判据是 `terminalInputSend` 的
+`sent: true`（host 接受）。
 
 **操作顺序（必须）**：桌面端的 mobile web bundle 是进程级缓存（`bundled-mobile-web-bundle.ts`，注释明确
 "bundle 在本次安装生命周期内不可变"），资产按 manifest 哈希校验。在运行中的桌面上重建 `out/mobile-web`
