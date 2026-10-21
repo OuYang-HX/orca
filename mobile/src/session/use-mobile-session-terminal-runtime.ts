@@ -235,7 +235,6 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
       void sendLiveTerminalInputRef.current(handle, bytes)
     })
     // Why: the subscription lifetime matches the session route, not reactive values.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   const { focusLiveInput, handleCaptureBlur, handleTerminalTap, resetLiveInputFocus } = useTerminalLiveInputFocus({
     activeHandleRef,
@@ -275,7 +274,14 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
     }
     previousFocusHandleRef.current = activeHandle
     scheduleTerminalLiveInputFocus(liveInputFocusTimerRef, () => liveInputRef.current?.focus())
-  }, [activeHandle, canSend, keyboardHeight, liveInputEnabled, liveInputFocusTimerRef, liveInputRef])
+  }, [
+    activeHandle,
+    canSend,
+    keyboardHeight,
+    liveInputEnabled,
+    liveInputFocusTimerRef,
+    liveInputRef
+  ])
   return {
     ptyModesRef,
     terminalGestureInputBucketsRef,
