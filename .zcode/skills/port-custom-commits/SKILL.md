@@ -37,7 +37,7 @@ description: 把 orca 个人仓的自定义提交移植到官方最新代码：�
 | 平台门控                                                      | 官方 `hostOs()` 接口                                                                          | 沿用官方封口，避免自建平台判断                                                                                                            |
 | route-parity 等源码指纹测试                                   | 已移除旧自定义 pin                                                                            | 官方已删除这类测试，不恢复已删除文件，也不保留旧重录提交                                                                                  |
 | 依赖锁文件                                                    | 仅增加插件的直接依赖索引                                                                      | 原生插件仍需要 `@expo/config-plugins`，其他依赖保持官方版本                                                                               |
-| Android 定制包版本与官方更新提醒                              | app.json 的版本/构建标签（当前 `0.0.58` / `oyhx.4` / versionCode 23）、首页与设置页的重建说明 | 沿用官方更新来源和缓存；发现官方新版本后同步源码并保留自定义功能重建，不要求个人仓发布 APK                                                |
+| Android 定制包版本与官方更新提醒                              | app.json 的版本/构建标签（当前 `0.0.58` / `oyhx.5` / versionCode 24）、首页与设置页的重建说明 | 沿用官方更新来源和缓存；发现官方新版本后同步源码并保留自定义功能重建，不要求个人仓发布 APK                                                |
 
 ## 同步流程
 
@@ -115,7 +115,18 @@ NAS 安装包目录只保留 `orca-latest.apk` + `orca-latest.apk.sha256` + `orc
 `TerminalHwKeys` 无 dispatch（无终端时拦截关闭，符合设计）、`AndroidRuntime:E`/`ReactNativeJS:E` 为空。
 拦截路径的 `dispatch keyCode=…` 证据仍需在会话终端页取（2026-10-15 那组记录了同样行为与判据）。
 
-APK SHA-256：`23a5f20979e3667972d6124e395aeee15d189899bdab19699b5b927b25ff3f05`。
+同日热修（`oyhx.5` / code 24）：平板上按方向键会"像按 Tab 一样切换 UI 框"。根因：拦截开关要求
+`liveInputEnabled`（直连输入模式），而本代上游把保存的输入模式偏好提前到会话挂载时生效
+（`251bbf7bb0`），buffered 终端下开关一直为 false → `MainActivity.dispatchKeyEvent` 落回系统 →
+Android 的 DPAD 焦点导航。修复：原生新增 `navigationInterceptEnabled`——终端标签页 + 已连接 +
+**当前无编辑框聚焦**时接管映射键（有编辑框时方向键仍归输入框）；JS 在 `activeSessionTab.type === 'terminal'`
+时开启。验证：mobile `tsc` 0 错误、session/terminal 359 文件 3381 项通过、质量门 0 新增问题、
+Kotlin 单测 14 项通过（新增 1 项覆盖新开关）、`install -r` 装到 `0.0.58`/`24`、首页注入三键
+PID 23164 不变且无崩溃。终端页方向键回归需在真实会话里按一次确认
+（`logcat -s TerminalHwKeys` 应出现 `dispatch keyCode=19`）。
+
+APK SHA-256（`oyhx.5`）：`517ac17fe73e7f3f306864160d7e50752a1aa1f0b25c0e0ed152b917a588f9e1`。
+上一版（`oyhx.4`）：`23a5f20979e3667972d6124e395aeee15d189899bdab19699b5b927b25ff3f05`。
 
 ## 退出条件
 

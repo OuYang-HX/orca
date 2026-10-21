@@ -17,12 +17,19 @@ class TerminalHwKeysModule : Module() {
     @JvmField
     var submitInterceptEnabled: Boolean = false
 
+    // Why: on a terminal tab without direct input there is no focused editor to
+    // receive arrows; without this Android focus navigation turns them into
+    // Tab-like jumps. Only claims keys while no editor holds focus.
+    @Volatile
+    @JvmField
+    var navigationInterceptEnabled: Boolean = false
+
     @Volatile
     private var instance: TerminalHwKeysModule? = null
 
     @JvmStatic
     fun maybeDispatchKeyEvent(event: KeyEvent): Boolean {
-      if (!interceptEnabled && !submitInterceptEnabled) {
+      if (!interceptEnabled && !submitInterceptEnabled && !navigationInterceptEnabled) {
         return false
       }
       val module = instance ?: return false
@@ -40,7 +47,8 @@ class TerminalHwKeysModule : Module() {
         event.isShiftPressed,
         hasFocusedEditor,
         interceptEnabled,
-        submitInterceptEnabled
+        submitInterceptEnabled,
+        navigationInterceptEnabled
       )
 
     @JvmStatic
@@ -51,7 +59,8 @@ class TerminalHwKeysModule : Module() {
       shift: Boolean,
       hasFocusedEditor: Boolean,
       interceptEnabled: Boolean,
-      submitInterceptEnabled: Boolean
+      submitInterceptEnabled: Boolean,
+      navigationInterceptEnabled: Boolean = false
     ): Boolean {
       if (bytesFor(keyCode, ctrl, alt, shift) == null) {
         return false
@@ -65,6 +74,12 @@ class TerminalHwKeysModule : Module() {
       // — an event-reported focus flag went stale across route remounts.
       if (isSubmitKey(keyCode)) {
         return (interceptEnabled || submitInterceptEnabled) && !hasFocusedEditor
+      }
+      // Why: a terminal tab without direct input has no focused editor to keep
+      // arrows away from Android's focus navigation; claim them for the shell,
+      // but never while an editor holds focus (that field owns caret motion).
+      if (navigationInterceptEnabled && !hasFocusedEditor) {
+        return true
       }
       return interceptEnabled
     }
@@ -155,6 +170,10 @@ class TerminalHwKeysModule : Module() {
 
     Function("setSubmitInterceptEnabled") { enabled: Boolean ->
       submitInterceptEnabled = enabled
+    }
+
+    Function("setNavigationInterceptEnabled") { enabled: Boolean ->
+      navigationInterceptEnabled = enabled
     }
 
     Function("isHardwareKeyboardConnected") {
