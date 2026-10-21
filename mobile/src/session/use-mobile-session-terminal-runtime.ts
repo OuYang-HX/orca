@@ -24,6 +24,7 @@ import {
 } from '../terminal/terminal-hardware-keys'
 import type { TerminalLiveInputSender } from '../terminal/terminal-live-input-sender'
 import type { TerminalLiveInputFailure } from '../terminal/terminal-live-pending-flush-state'
+import { useShellHardwareKeySink } from './use-shell-hardware-key-sink'
 import { useTerminalLiveInputCommit } from '../terminal/use-terminal-live-input-commit'
 import { resolveMobileTerminalInputGate } from '../terminal/terminal-input-connection-gate'
 import { createInitialSessionAutoCreateState } from './use-initial-session-terminal-autocreate'
@@ -212,6 +213,7 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
       }
     }, [activeHandle, canSend, liveInputEnabled, terminalTabActive])
   )
+  useShellHardwareKeySink(activeHandleRef, activeSessionTabTypeRef, sendLiveTerminalInputRef)
   // Why: submit keys must guard from route focus, not from connection readiness —
   // an unfocused Enter during the connect window falls through to Android
   // focus-search, which clicks whatever Pressable gains focus (session exit).
