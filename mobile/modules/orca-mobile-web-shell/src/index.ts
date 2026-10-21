@@ -52,6 +52,12 @@ export type OrcaMobileWebShellViewProps = ViewProps & {
   onExternalNavigation?: (
     event: NativeSyntheticEvent<MobileWebShellExternalNavigationPayload>
   ) => void
+  /**
+   * A hardware navigation key the activity took from the WebView before its focus traversal could.
+   * The shell hands it to JS because the page is a web document whose terminal never sees those
+   * keys. Only a session route emits, and only on ACTION_DOWN.
+   */
+  onHardwareKey?: (event: NativeSyntheticEvent<{ keyCode: number }>) => void
 }
 
 /** What a ref on the view carries. Expo puts the view's functions on the component prototype. */

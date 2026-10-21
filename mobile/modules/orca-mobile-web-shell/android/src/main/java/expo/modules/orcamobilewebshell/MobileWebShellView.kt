@@ -48,6 +48,9 @@ internal class OrcaMobileWebShellView(
   private val onLoadState by EventDispatcher<Map<String, Any>>()
   private val onBridgeMessage by EventDispatcher<Map<String, Any>>()
   private val onExternalNavigation by EventDispatcher<Map<String, Any>>()
+  // Why: the terminal's input channel lives in JS (the page is a web document), so the activity
+  // hands navigation keys here instead of trying to synthesise DOM events the page ignores.
+  private val onHardwareKey by EventDispatcher<Map<String, Any>>()
 
   private var generationDirectory = ""
   private var sessionId = ""
@@ -85,6 +88,10 @@ internal class OrcaMobileWebShellView(
 
   /** The WebView the routing dispatches into, and the route it is showing. */
   internal fun webViewForKeys(): WebView? = webView
+
+  internal fun emitHardwareKey(keyCode: Int) {
+    onHardwareKey(mapOf("keyCode" to keyCode))
+  }
 
   fun setGenerationDirectory(value: String) {
     generationDirectory = value
@@ -428,9 +435,6 @@ internal class OrcaMobileWebShellView(
       // After the rewrite as well as before it: the back-forward list is the page's, and the shell
       // gives it no way back to a document it has already replaced.
       view.clearHistory()
-      WebShellTerminalKeyRouting.resetPageSink()
-      // The page registers its key sink after its first render, so ask once it has had the time.
-      view.postDelayed({ WebShellTerminalKeyRouting.probePageSink(view) }, 1500)
       emit(loadState.finished())
     }
 

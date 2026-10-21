@@ -146,14 +146,25 @@ Kotlin 单测 3 项、页面 sink 单测 4 项、mobile 全量 11176 项通过�
 生效条件：页面代码在桌面 web bundle 里（`out/mobile-web`，buildId `60ae182b…`，有进程级缓存）→ **必须
 重启桌面 Orca**，平板才会重新下载该 buildId 的 bundle；只装 APK 不改变行为。
 
-APK SHA-256（`oyhx.5` 现行）：`c345aa6e0c7e1bd4327595df493e604f05ad32fd3daddef87add7245aed36c26`。
-历史：`133f8fc8…`（含诊断日志）、`f2b2fe15…`（含失焦清理、无 web-shell 路由）、`517ac17f…`（初版）、
-`oyhx.4` `23a5f209…`（均已取代）。
+APK SHA-256（`oyhx.5` 现行）：`1637720e3856dbea73eb32223218673f5621ae2773ec755961f6f9dc4d38f812`。
+历史：`c345aa6e…`、`133f8fc8…`、`f2b2fe15…`、`517ac17f…`、`oyhx.4` `23a5f209…`（均已取代）。
 
 **操作顺序（必须）**：桌面端的 mobile web bundle 是进程级缓存（`bundled-mobile-web-bundle.ts`，注释明确
 "bundle 在本次安装生命周期内不可变"），资产按 manifest 哈希校验。在运行中的桌面上重建 `out/mobile-web`
 会让「旧 manifest + 新字节」同时存在，重启前重开页面可能报 `mobile_web_bundle_asset_changed`。
 所以升级流程固定为：**先重启桌面 Orca，再在平板上重开会话页**。
+
+**补充（同日最终结论）**：上面的顺序只对"页面代码要生效"有意义，而实际桌面跑的是 `/Applications/Orca.app`
+（打包版），它从 `Contents/Resources/app.asar.unpacked/out/mobile-web` 提供页面（buildId `dd9bb94d…`）；
+仓库 `out/mobile-web`（`60ae182b…`）**从未被读取**。实测页面里 `typeof window.__orcaSendTerminalKey` 为
+undefined、加载的 64 个 chunk 只有 26 个与仓库产物重合。所以页面侧 sink 方案无解（除非重打桌面 app）。
+
+最终实现（`3fec398e35`，纯 APK，无需重启桌面）：
+`MainActivity` 在 `/session/` 路由吞掉方向键/Home/End/PgUp/PgDn/Tab → 视图事件 `onHardwareKey` → RN
+`useShellHardwareKeySend` 订阅 `session.tabs.subscribe` 取活动 tab 的 `terminal` handle →
+`sendTerminalLiveAccessoryRawBytes`（`terminalInputSend`）。注意 URL 的 session 段是
+`${repoId}::${path}`（worktree id），**不是** terminal handle，直接拿来发送会被 host 拒绝（实测
+`sent=false`）；改从快照取 `term_…` 后才 `sent=true`。
 
 ## 退出条件
 
