@@ -237,4 +237,59 @@ class TerminalHwKeysModuleTest {
       assertTrue(bytes(keyCode, alt = true) != null)
     }
   }
+  @Test
+  fun `navigation interception claims mapped keys only while no editor holds focus`() {
+    // Buffered terminal: there is no capture field, so arrows must reach the
+    // shell instead of becoming Android focus navigation.
+    assertTrue(
+      TerminalHwKeysModule.shouldInterceptKeyEvent(
+        KeyEvent.KEYCODE_DPAD_UP,
+        ctrl = false,
+        alt = false,
+        shift = false,
+        hasFocusedEditor = false,
+        interceptEnabled = false,
+        submitInterceptEnabled = false,
+        navigationInterceptEnabled = true
+      )
+    )
+    assertTrue(
+      TerminalHwKeysModule.shouldInterceptKeyEvent(
+        KeyEvent.KEYCODE_TAB,
+        ctrl = false,
+        alt = false,
+        shift = false,
+        hasFocusedEditor = false,
+        interceptEnabled = false,
+        submitInterceptEnabled = false,
+        navigationInterceptEnabled = true
+      )
+    )
+    // A focused command field owns caret motion, so it keeps the key.
+    assertFalse(
+      TerminalHwKeysModule.shouldInterceptKeyEvent(
+        KeyEvent.KEYCODE_DPAD_UP,
+        ctrl = false,
+        alt = false,
+        shift = false,
+        hasFocusedEditor = true,
+        interceptEnabled = false,
+        submitInterceptEnabled = false,
+        navigationInterceptEnabled = true
+      )
+    )
+    // Unmapped keys stay unclaimed, and the flag alone claims nothing off-route.
+    assertFalse(
+      TerminalHwKeysModule.shouldInterceptKeyEvent(
+        KeyEvent.KEYCODE_A,
+        ctrl = false,
+        alt = false,
+        shift = false,
+        hasFocusedEditor = false,
+        interceptEnabled = false,
+        submitInterceptEnabled = false,
+        navigationInterceptEnabled = true
+      )
+    )
+  }
 }

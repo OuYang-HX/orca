@@ -11,13 +11,12 @@ type TerminalHwKeysEvents = {
 declare class TerminalHwKeysModule extends NativeModule<TerminalHwKeysEvents> {
   setEnabled(enabled: boolean): void
   setSubmitInterceptEnabled(enabled: boolean): void
+  setNavigationInterceptEnabled(enabled: boolean): void
   isHardwareKeyboardConnected(): boolean
 }
 
 const TerminalHwKeys =
-  hostOs() === 'android'
-    ? requireNativeModule<TerminalHwKeysModule>('TerminalHwKeys')
-    : null
+  hostOs() === 'android' ? requireNativeModule<TerminalHwKeysModule>('TerminalHwKeys') : null
 
 const hardwareKeyEmitter = TerminalHwKeys
   ? new EventEmitter<TerminalHwKeysEvents>(TerminalHwKeys)
@@ -34,6 +33,15 @@ export function setTerminalHardwareKeysEnabled(enabled: boolean): void {
 // so no JS focus reporting is needed.
 export function setTerminalSubmitInterceptEnabled(enabled: boolean): void {
   TerminalHwKeys?.setSubmitInterceptEnabled(enabled)
+}
+
+// Why: a terminal tab that is not in direct-input mode has no focused editor,
+// so arrows would fall through to Android focus navigation and jump between
+// on-screen controls like Tab. Claim them for the shell, but only while no
+// editor holds focus (see the native gate) — a focused command field owns caret
+// motion.
+export function setTerminalNavigationInterceptEnabled(enabled: boolean): void {
+  TerminalHwKeys?.setNavigationInterceptEnabled(enabled)
 }
 
 // Why: with a hardware keyboard attached the soft keyboard never shows
