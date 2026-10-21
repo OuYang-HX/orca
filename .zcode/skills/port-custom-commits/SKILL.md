@@ -16,27 +16,28 @@ description: 把 orca 个人仓的自定义提交移植到官方最新代码：�
   `mobile/plugins/with-terminal-hwkeys.js` 与 `mobile/modules/expo-terminal-hwkeys/` 为准。
 - 设备地址、配对信息与 SDK/JDK 路径只放本机配置，不写入本技能或共享记忆。
 - Node 使用仓库要求的 24；pnpm 版本取 `packageManager`。本机 pnpm 包装器失效时，
-  使用 `npx --yes pnpm@12.8.1`，不要改仓库依赖来绕过环境问题。
+  使用 `npx --yes pnpm@<packageManager 的版本>`（当前 12.14.0），不要改仓库依赖来绕过环境问题。
 
 ## 自定义功能台账
 
-最近核对：2026-10-15，官方基线 `dc146c09e2`，较旧基线 `7e52bed4e0` 新增 1209 个提交
-（其中 92 个触及 `mobile/`，唯一落在我们文件上的是 `50b3d2e34c` 终端快照修复）。
-旧分支备份：`backup/mobile-tablet-hardware-keyboard-20261015`（本地与 origin）。
+最近核对：2026-10-22，官方基线 `de7a2d24f9`，较旧基线 `dc146c09e2` 新增 1449 个提交
+（其中 134 个触及 `mobile/`）。本代官方新增 `0cba9f2e08`（自带 woff2 字体资产 + 首绘门控），
+我们的字体补丁因此全部作废。
+旧分支备份：`backup/mobile-tablet-hardware-keyboard-20261022`（本地与 origin）。
 
-| 功能 | 当前增量 | 官方覆盖情况与处置 |
-| --- | --- | --- |
-| Android 硬件方向键、ESC、Tab、翻页、Home/End、Ctrl/Alt 组合键 | 原生模块、MainActivity prebuild 插件、JS 事件接入 | 官方没有 dispatchKeyEvent/onKeyPreIme 拦截，保留 |
-| 未聚焦 Enter/NumpadEnter/DPAD_CENTER | 原生实时 EditText 焦点判定、路由焦点门控、JS submit 接入 | 官方未覆盖，保留，防止 Android 焦点搜索误点离开会话 |
-| 硬键盘探测与切换标签/工作区后聚焦 | 原生设备探测、成功门控后记录 handle、官方聚焦调度器 | 官方未覆盖，保留；连接与标签条异步稳定前允许重试 |
-| 防止自然失焦打断硬键盘输入 | 官方聚焦 hook 的 Android blur 接入、主动关闭时短暂抑制 | 官方未覆盖，保留；iOS 不自动重开键盘 |
-| xterm / addon 升级与 esbuild 钉版 | 已移除自定义版本差异 | 官方已钉 `@xterm/xterm` 6.1.0-beta.304、esbuild 0.28.2、acorn 8.18.0，本代无需再钉 |
-| colorSchemeQuery 关闭 | `terminal-init.ts` 的 vtExtensions 选项 | 官方仍会答复颜色查询，保留以避免远程延迟回复回显 |
-| Nerd Font 图标与首次绘制等待 | 字体资产、HTML @font-face、native-document-entry 启动等待 | 官方字体栈已列出 `Symbols Nerd Font Mono` 但不带资产；保留字体与官方 web-ready 门控，失败或 3 秒超时仍启动 |
-| 平台门控 | 官方 `hostOs()` 接口 | 沿用官方封口，避免自建平台判断 |
-| route-parity 等源码指纹测试 | 已移除旧自定义 pin | 官方已删除这类测试，不恢复已删除文件，也不保留旧重录提交 |
-| 依赖锁文件 | 仅增加插件的直接依赖索引 | 原生插件仍需要 `@expo/config-plugins`，其他依赖保持官方版本 |
-| Android 定制包版本与官方更新提醒 | app.json 的版本/构建标签（当前 `0.0.55` / `oyhx.3` / versionCode 22）、首页与设置页的重建说明 | 沿用官方更新来源和缓存；发现官方新版本后同步源码并保留自定义功能重建，不要求个人仓发布 APK |
+| 功能                                                          | 当前增量                                                                                      | 官方覆盖情况与处置                                                                                                                        |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Android 硬件方向键、ESC、Tab、翻页、Home/End、Ctrl/Alt 组合键 | 原生模块、MainActivity prebuild 插件、JS 事件接入                                             | 官方没有 dispatchKeyEvent/onKeyPreIme 拦截，保留                                                                                          |
+| 未聚焦 Enter/NumpadEnter/DPAD_CENTER                          | 原生实时 EditText 焦点判定、路由焦点门控、JS submit 接入                                      | 官方未覆盖，保留，防止 Android 焦点搜索误点离开会话                                                                                       |
+| 硬键盘探测与切换标签/工作区后聚焦                             | 原生设备探测、成功门控后记录 handle、官方聚焦调度器                                           | 官方未覆盖，保留；连接与标签条异步稳定前允许重试                                                                                          |
+| 防止自然失焦打断硬键盘输入                                    | 官方聚焦 hook 的 Android blur 接入、主动关闭时短暂抑制                                        | 官方未覆盖，保留；iOS 不自动重开键盘                                                                                                      |
+| xterm / addon 升级与 esbuild 钉版                             | 已移除自定义版本差异                                                                          | 官方已钉 `@xterm/xterm` 6.1.0-beta.304、esbuild 0.28.2、acorn 8.18.0，本代无需再钉                                                        |
+| colorSchemeQuery 关闭                                         | `terminal-init.ts` 的 vtExtensions 选项                                                       | 官方仍会答复颜色查询，保留以避免远程延迟回复回显                                                                                          |
+| Nerd Font 图标与首次绘制等待                                  | 已全部删除（字体 TTF、base64 模块、@font-face、帧门控提交）                                   | **官方已覆盖**（`0cba9f2e08` 自带 woff2 资产 + `terminal-nerd-font-css` + message-bridge 首绘门控）；本代把自建字体与两个字体提交一并丢弃 |
+| 平台门控                                                      | 官方 `hostOs()` 接口                                                                          | 沿用官方封口，避免自建平台判断                                                                                                            |
+| route-parity 等源码指纹测试                                   | 已移除旧自定义 pin                                                                            | 官方已删除这类测试，不恢复已删除文件，也不保留旧重录提交                                                                                  |
+| 依赖锁文件                                                    | 仅增加插件的直接依赖索引                                                                      | 原生插件仍需要 `@expo/config-plugins`，其他依赖保持官方版本                                                                               |
+| Android 定制包版本与官方更新提醒                              | app.json 的版本/构建标签（当前 `0.0.58` / `oyhx.4` / versionCode 23）、首页与设置页的重建说明 | 沿用官方更新来源和缓存；发现官方新版本后同步源码并保留自定义功能重建，不要求个人仓发布 APK                                                |
 
 ## 同步流程
 
@@ -84,40 +85,37 @@ description: 把 orca 个人仓的自定义提交移植到官方最新代码：�
 
 ## 最近验证与交付
 
-2026-10-15：官方基线 `7e52bed4e0` → `dc146c09e2`（+1209 提交），16 个 `[oyhx]` 提交全部重放。
-`git grep` 复核 `mobile/` 无 `dispatchKeyEvent`/`onKeyPreIme`/`KEYCODE_DPAD`/`colorSchemeQuery`，
-route-parity 类指纹测试官方已删除；冲突只有 4 处：`mobile/package.json`、`mobile/pnpm-lock.yaml`
-（官方 `@orca/process-host` 与我们的 `@expo/config-plugins` 并存）和 `mobile/app.json`
-的 `version`/`extra`/`android`（取定制值：`0.0.55` / `oyhx.3` / `22`）。
+2026-10-22：官方基线 `dc146c09e2` → `de7a2d24f9`（+1449 提交，134 个触及 `mobile/`）。
+18 个 `[oyhx]` 提交流中丢弃 2 个字体提交，净增量 28 文件 / +1067 −32。
+冲突：`mobile/package.json`（官方 `@types/*` 与我们 `@expo/config-plugins` 并存）、
+`use-mobile-session-terminal-runtime.ts` 的 react-native 导入（合并官方 `Alert` 与我们的 `hostOs`，
+去掉不再使用的 `Platform`）、`document-shell.ts`（字体 CSS 全取官方）、`mobile/app.json`（取定制版本值）。
+lockfile 缺插件索引：手补 3 行 importer 条目后用 `pnpm install` 验证 "Lockfile is up to date"——
+**不要用 `--lockfile-only` 重新解析**，它会把官方 pin 升到更新的小版本。
 
-验证：根目录 `pnpm tc` 通过；mobile `tsc --noEmit` 0 错误；`check:tests-typecheck` 棘轮通过
-（1009 个测试文件入程序，沿用官方 122 个历史例外）；mobile 全量测试 1011 个文件、
-10647 项通过、6 项跳过；`check:code-quality:changed -- upstream/main` 0 新增问题（23 个改动文件）；
-Kotlin 按键编码单测 13 项通过。
+验证：mobile `tsc --noEmit` 0 错误；`check:tests-typecheck` 棘轮通过（1074 个测试文件，沿用官方 119 个例外）；
+mobile 全量 1078 个文件 / 11173 项通过 / 6 跳过；根 `pnpm tc` 0 错误（四个 TS 工程）；
+`check:code-quality:changed -- upstream/main` 0 新增问题（19 个改动文件）；Kotlin 按键编码单测 13 项通过。
+质量门首轮报了 2 条我们引入的问题（多余 `eslint-disable`、测试里的类型断言），修掉后单提交 `8e3f18f738`。
 
-版本策略：官方 main 的 app.json 为 `0.0.55`，`mobile-android-v*` 最新发布标签仍是 `0.0.52`；
-定制包版本对齐到已纳入源码的 `0.0.55`，`androidBuildLabel` 递增为 `oyhx.3`，versionCode `22`
-（大于平板旧包 21 与官方包 20）。更新来源与缓存仍走官方 `stablyai/orca`，只保留定制显示与
-重建说明；官方发布新 Android 版本时首页/设置提醒重建，不再走个人仓。
+版本策略：官方 main 的 app.json 为 `0.0.58`、versionCode `22`，`mobile-android-v*` 最新发布标签仍是 `0.0.52`；
+定制包对齐 `0.0.58`，`androidBuildLabel` 递增 `oyhx.4`，versionCode `23`。更新来源与缓存仍走官方
+`stablyai/orca`，只保留定制显示与重建说明。
 
-打包：`expo prebuild --platform android --clean --no-install` 重新生成工程
-（`with-terminal-hwkeys` 注入 MainActivity 已确认，生成物 versionCode 22 / versionName 0.0.55）；
-arm64-v8a release 构建成功：`com.stably.orca.mobile` `0.0.55 (oyhx.3)` / versionCode `22`，
-大小 63853430 字节，签名与平板旧包一致（Android Debug 证书 `fac61745…`），
-DEX 内含 `terminalhwkeys`、JS bundle 含 `TerminalHwKeys`/`setSubmitInterceptEnabled`。
-`adb install -r` 返回 Success，包管理器确认 `0.0.55` / `22`（原配对数据保留）；
-启动后进程存活、`AndroidRuntime:E` 与 `ReactNativeJS:E` 均为空。
-真机三组探针（解锁后补跑，全程 PID 18153 未变、`AndroidRuntime:E`/`ReactNativeJS:E` 为空）：
-`input keyevent --source 769 19` → `TerminalHwKeys: dispatch keyCode=19 bytes=true`；
-`input keycombination 113 31` → `dispatch keyCode=31 ctrl=true bytes=true`；
-普通字母 `input keyevent --source 769 31` → 无 dispatch 行（未拦截，符合设计）。
-主页无终端时拦截关闭，探针需在会话终端页执行才有意义。
+打包：`expo prebuild --platform android --clean --no-install` 重建工程（插件注入 MainActivity 已确认）；
+arm64-v8a `com.stably.orca.mobile` `0.0.58 (oyhx.4)` / versionCode `23`，59886896 字节，
+签名与平板旧包同一证书（`fac61745…`），DEX 含 `terminalhwkeys`、bundle 含 `TerminalHwKeys`。
+本代体积下降是本轮官方删除不可达原生屏（`86f6258d54`）所致。
 
-交付：桌面 `orca-mobile-0.0.55-oyhx.3-code22-20261015-arm64.apk` + `.sha256`；
-NAS 安装包目录只保留 `orca-latest.apk` + `orca-latest.apk.sha256` + `orca-latest.txt`，
-其他应用安装包未动，两处副本摘要一致。
+交付：桌面 `orca-mobile-0.0.58-oyhx.4-code23-20261022-arm64.apk` + `.sha256`；
+NAS 安装包目录只保留 `orca-latest.apk` + `orca-latest.apk.sha256` + `orca-latest.txt`，两处摘要一致。
+装机：平板无线 adb 的配对在设备端丢失（且 `adb connect` 报 `EHOSTUNREACH`），改用 USB 后
+`adb install -r` 返回 Success，包管理器确认 `0.0.58` / `23`，原配对数据保留（首页仍显示
+`Connected · Direct · LAN` 与 DESKTOPS 列表）。首页（无终端）注入 ↑/Ctrl+C/字母：PID 22376 前后未变、
+`TerminalHwKeys` 无 dispatch（无终端时拦截关闭，符合设计）、`AndroidRuntime:E`/`ReactNativeJS:E` 为空。
+拦截路径的 `dispatch keyCode=…` 证据仍需在会话终端页取（2026-10-15 那组记录了同样行为与判据）。
 
-APK SHA-256：`5dd0b3b7700cacd2bc224eef450f6a8a14902d830d1212fc11884f13cb140a62`。
+APK SHA-256：`23a5f20979e3667972d6124e395aeee15d189899bdab19699b5b927b25ff3f05`。
 
 ## 退出条件
 
