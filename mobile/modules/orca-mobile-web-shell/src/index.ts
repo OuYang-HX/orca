@@ -1,7 +1,21 @@
-import { requireNativeViewManager } from 'expo-modules-core'
+import { Platform } from 'react-native'
+import { requireNativeModule, requireNativeViewManager } from 'expo-modules-core'
 import type { ComponentType, RefAttributes } from 'react'
 import type { NativeSyntheticEvent, ViewProps } from 'react-native'
 import type { MobileWebShellLoadStatePayload } from './load-state'
+
+const shellModule =
+  Platform.OS === 'web'
+    ? null
+    : requireNativeModule<{ setTerminalTabActive(active: boolean): void }>('OrcaMobileWebShell')
+
+/**
+ * Tells the shell whether the session is showing a terminal tab. Only then does the activity take
+ * navigation keys from the WebView: every other tab keeps them for the page.
+ */
+export function setTerminalTabActive(active: boolean): void {
+  shellModule?.setTerminalTabActive(active)
+}
 
 /** One raw JSON envelope, exactly as the page posted it. Parsing is the caller's. */
 export type MobileWebShellBridgeMessagePayload = { json: string }
