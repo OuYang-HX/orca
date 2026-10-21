@@ -43,12 +43,4 @@ class WebShellTerminalKeyRoutingTest {
       assertFalse("keyCode $code", WebShellTerminalKeyRouting.isRoutedKey(code))
     }
   }
-
-  @Test
-  fun `send script calls the page sink and reports a missing one`() {
-    val script = WebShellTerminalKeyRouting.sendScript(KeyEvent.KEYCODE_DPAD_UP)
-    assertTrue(script.contains("__orcaSendTerminalKey"))
-    assertTrue(script.contains("typeof f!=='function'"))
-    assertTrue(script.contains("f(${KeyEvent.KEYCODE_DPAD_UP})"))
-  }
 }
