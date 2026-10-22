@@ -407,7 +407,9 @@ export function MobileWebShellScreen({
         sessionId={state.sessionId}
         bridgeEnabled={bridge.bridgeEnabled}
         onBridgeMessage={bridge.onBridgeMessage}
-        onHardwareKey={(event) => sendHardwareKey(event.nativeEvent.keyCode)}
+        onHardwareKey={(event) =>
+          sendHardwareKey(event.nativeEvent.keyCode, event.nativeEvent.control === true)
+        }
         onExternalNavigation={(event) => {
           const target = cancelledShellNavigationTarget(event.nativeEvent.url)
           if (target === null) {

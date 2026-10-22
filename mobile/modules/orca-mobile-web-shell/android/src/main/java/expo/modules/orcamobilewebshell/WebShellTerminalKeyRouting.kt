@@ -45,6 +45,18 @@ object WebShellTerminalKeyRouting {
   internal fun isRoutedKey(keyCode: Int): Boolean = keyCode in ROUTED_KEY_CODES
 
   /**
+   * Keys a Ctrl chord turns into a control byte: the letters, Space, the brackets and the
+   * backslash. The page keeps everything else, chords included (Ctrl+V is paste there).
+   */
+  @JvmStatic
+  internal fun isControlKey(keyCode: Int): Boolean =
+    keyCode in KeyEvent.KEYCODE_A..KeyEvent.KEYCODE_Z ||
+      keyCode == KeyEvent.KEYCODE_SPACE ||
+      keyCode == KeyEvent.KEYCODE_LEFT_BRACKET ||
+      keyCode == KeyEvent.KEYCODE_RIGHT_BRACKET ||
+      keyCode == KeyEvent.KEYCODE_BACKSLASH
+
+  /**
    * Consumes a navigation key for the session page on screen. False leaves the key to the app: no
    * shell on screen, a route without a terminal, or a key the page keeps.
    */
@@ -52,14 +64,18 @@ object WebShellTerminalKeyRouting {
   fun dispatch(event: KeyEvent): Boolean {
     val view = OrcaMobileWebShellView.active ?: return false
     if (!isSessionRoute(view.webViewForKeys()?.url)) return false
-    if (!isRoutedKey(event.keyCode)) return false
     // Why: a chat, markdown or file tab has nowhere to put an arrow, so the page keeps its own
     // focus navigation there instead of losing the key to this route's terminal.
     if (!terminalTabActive) return false
+    // Why Ctrl chords: WebView has no binding for them, so the page drops Ctrl+U instead of the
+    // shell's clear-line, and the terminal never sees the byte. Chords are never IME input, so
+    // routing them cannot take typing away from the input method.
+    val chord = event.isCtrlPressed && isControlKey(event.keyCode)
+    if (!chord && !isRoutedKey(event.keyCode)) return false
     // Down only: forwarding the up event too would double every sequence. The up is still
     // swallowed so traversal never acts on a key the page did not see.
     if (event.action == KeyEvent.ACTION_DOWN) {
-      view.emitHardwareKey(event.keyCode)
+      view.emitHardwareKey(event.keyCode, chord)
     }
     return true
   }

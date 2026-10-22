@@ -89,8 +89,8 @@ internal class OrcaMobileWebShellView(
   /** The WebView the routing dispatches into, and the route it is showing. */
   internal fun webViewForKeys(): WebView? = webView
 
-  internal fun emitHardwareKey(keyCode: Int) {
-    onHardwareKey(mapOf("keyCode" to keyCode))
+  internal fun emitHardwareKey(keyCode: Int, control: Boolean = false) {
+    onHardwareKey(mapOf("keyCode" to keyCode, "control" to control))
   }
 
   fun setGenerationDirectory(value: String) {

@@ -71,7 +71,7 @@ export type OrcaMobileWebShellViewProps = ViewProps & {
    * The shell hands it to JS because the page is a web document whose terminal never sees those
    * keys. Only a session route emits, and only on ACTION_DOWN.
    */
-  onHardwareKey?: (event: NativeSyntheticEvent<{ keyCode: number }>) => void
+  onHardwareKey?: (event: NativeSyntheticEvent<{ keyCode: number; control?: boolean }>) => void
 }
 
 /** What a ref on the view carries. Expo puts the view's functions on the component prototype. */
