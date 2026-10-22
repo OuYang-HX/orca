@@ -19,8 +19,27 @@ const SHELL_KEY_NAMES: Record<number, string> = {
   61: 'Tab'
 }
 
+/**
+ * Android key codes a Ctrl chord turns into a control byte. The letters run contiguously
+ * (`KEYCODE_A` = 29), so only the ends are needed.
+ */
+const CTRL_LETTER_FIRST = 29
+const CTRL_LETTER_LAST = 54
+const CTRL_SPECIAL: Record<number, string> = {
+  62: '\u0000', // Space
+  71: '\u001b', // [
+  72: '\u001d', // ]
+  73: '\u001c' // backslash
+}
+
 /** The bytes a routed hardware key stands for, or null for a key the page keeps. */
-export function shellHardwareKeyBytes(keyCode: number): string | null {
+export function shellHardwareKeyBytes(keyCode: number, control = false): string | null {
+  if (control) {
+    if (keyCode >= CTRL_LETTER_FIRST && keyCode <= CTRL_LETTER_LAST) {
+      return String.fromCharCode(keyCode - CTRL_LETTER_FIRST + 1)
+    }
+    return CTRL_SPECIAL[keyCode] ?? null
+  }
   const key = SHELL_KEY_NAMES[keyCode]
   return key === undefined ? null : getTerminalLiveSpecialKeyBytes(key)
 }

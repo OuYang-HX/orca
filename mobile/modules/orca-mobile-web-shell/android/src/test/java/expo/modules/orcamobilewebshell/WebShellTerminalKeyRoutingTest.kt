@@ -18,6 +18,27 @@ class WebShellTerminalKeyRoutingTest {
   }
 
   @Test
+  fun `a Ctrl chord turns a letter into a control byte`() {
+    for (code in
+      intArrayOf(
+        KeyEvent.KEYCODE_A,
+        KeyEvent.KEYCODE_U,
+        KeyEvent.KEYCODE_Z,
+        KeyEvent.KEYCODE_SPACE,
+        KeyEvent.KEYCODE_LEFT_BRACKET,
+        KeyEvent.KEYCODE_RIGHT_BRACKET,
+        KeyEvent.KEYCODE_BACKSLASH
+      )) {
+      assertTrue("key $code", WebShellTerminalKeyRouting.isControlKey(code))
+    }
+  }
+
+  @Test
+  fun `a letter without Ctrl stays with the page and its input method`() {
+    assertFalse(WebShellTerminalKeyRouting.isRoutedKey(KeyEvent.KEYCODE_U))
+  }
+
+  @Test
   fun `routes navigation keys and leaves the rest to the page`() {
     for (code in
       intArrayOf(

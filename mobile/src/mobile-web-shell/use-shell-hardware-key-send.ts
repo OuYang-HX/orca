@@ -20,7 +20,7 @@ import { sessionHandleFromPathname } from './session-handle-from-route'
 export function useShellHardwareKeySend(
   hostId: string | undefined,
   pathname: string
-): (keyCode: number) => void {
+): (keyCode: number, control?: boolean) => void {
   const { client, state } = useHostClient(hostId)
   const worktree = sessionHandleFromPathname(pathname)
   const activeTerminalRef = useRef<string | null>(null)
@@ -45,8 +45,8 @@ export function useShellHardwareKeySend(
   }, [client, worktree])
 
   return useCallback(
-    (keyCode: number) => {
-      const bytes = shellHardwareKeyBytes(keyCode)
+    (keyCode: number, control = false) => {
+      const bytes = shellHardwareKeyBytes(keyCode, control)
       const terminal = activeTerminalRef.current
       if (bytes === null || !client || terminal === null || state !== 'connected') {
         return
