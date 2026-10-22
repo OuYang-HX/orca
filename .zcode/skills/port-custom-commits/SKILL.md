@@ -96,7 +96,7 @@ lockfile 缺插件索引：手补 3 行 importer 条目后用 `pnpm install` 验
 验证：mobile `tsc --noEmit` 0 错误；`check:tests-typecheck` 棘轮通过（1074 个测试文件，沿用官方 119 个例外）；
 mobile 全量 1078 个文件 / 11173 项通过 / 6 跳过；根 `pnpm tc` 0 错误（四个 TS 工程）；
 `check:code-quality:changed -- upstream/main` 0 新增问题（19 个改动文件）；Kotlin 按键编码单测 13 项通过。
-质量门首轮报了 2 条我们引入的问题（多余 `eslint-disable`、测试里的类型断言），修掉后单提交 `8e3f18f738`。
+质量门首轮报了 2 条我们引入的问题（多余 `eslint-disable`、测试里的类型断言），修掉后单提交 `4178b28c62`。
 
 版本策略：官方 main 的 app.json 为 `0.0.58`、versionCode `22`，`mobile-android-v*` 最新发布标签仍是 `0.0.52`；
 定制包对齐 `0.0.58`，`androidBuildLabel` 递增 `oyhx.4`，versionCode `23`。更新来源与缓存仍走官方
@@ -136,7 +136,7 @@ submit=false`，三个 setter 一次未调用）。CDP 连上 WebView 后实测�
 随后 Android 的 DPAD 焦点遍历把焦点移到 BUTTON/DIV，此后按键不再派发 DOM；焦点在 xterm textarea 时
 `keydown/keyup/input/beforeinput` 全空，光标不动、`selectionStart` 被清。xterm 也不消费合成
 KeyboardEvent（`isTrusted`）。结论：只能在原生拦截。
-修复（`37804f1d87`）：`MainActivity` 对 `/session/` 路由吞掉方向键/Home/End/PgUp/PgDn/Tab（仅 ACTION_DOWN），
+修复（`44941b2341`）：`MainActivity` 对 `/session/` 路由吞掉方向键/Home/End/PgUp/PgDn/Tab（仅 ACTION_DOWN），
 `evaluateJavascript` 调用页面 sink `window.__orcaSendTerminalKey(keyCode)`；页面侧
 `useShellHardwareKeySink` 把它接到 `sendLiveTerminalInput`（走 `terminalInputSend` RPC），按键→字节映射复用
 `getTerminalLiveSpecialKeyBytes`。能力探测：只在页面存在 sink 时拦截，旧 bundle/首页一律放行（首键丢一次）。
@@ -146,10 +146,10 @@ Kotlin 单测 3 项、页面 sink 单测 4 项、mobile 全量 11176 项通过�
 生效条件：页面代码在桌面 web bundle 里（`out/mobile-web`，buildId `60ae182b…`，有进程级缓存）→ **必须
 重启桌面 Orca**，平板才会重新下载该 buildId 的 bundle；只装 APK 不改变行为。
 
-APK SHA-256（`oyhx.5` 现行）：`768773253c0f8fd21985ddef6282125e8a9cf78231b1fab9bdf7009d6c6fdca5`。
+APK SHA-256（`oyhx.5` 现行）：`b28944af91b1073bdee4845c8da5e8804f7e71c76518f6fe015e3dad0da83d0f`。
 历史：`1637720e…`、`c345aa6e…`、`133f8fc8…`、`f2b2fe15…`、`517ac17f…`、`oyhx.4` `23a5f209…`（均已取代）。
 
-**方向键最终形态（`de828d1ecd`）**：Activity 只在「`/session/` 路由 + RN 报告当前 tab 是终端」时接管
+**方向键最终形态（`5a09790873`）**：Activity 只在「`/session/` 路由 + RN 报告当前 tab 是终端」时接管
 （`setTerminalTabActive`），其余 tab 放行页面自身焦点导航。验证方式换成可观测的终端行为：在 Terminal 1
 用软键盘输入一条命令再提交，按硬件 ↑ 应回填该命令（实测出现 `dsh-tui`）。空历史 shell 里 ↑ 无变化、
 omp 这类全屏 TUI 可能不响应方向键，都属正常，不代表链路失败；链路判据是 `terminalInputSend` 的
@@ -165,7 +165,7 @@ omp 这类全屏 TUI 可能不响应方向键，都属正常，不代表链路�
 仓库 `out/mobile-web`（`60ae182b…`）**从未被读取**。实测页面里 `typeof window.__orcaSendTerminalKey` 为
 undefined、加载的 64 个 chunk 只有 26 个与仓库产物重合。所以页面侧 sink 方案无解（除非重打桌面 app）。
 
-最终实现（`3fec398e35`，纯 APK，无需重启桌面）：
+最终实现（`e1121d7fe0`，纯 APK，无需重启桌面）：
 `MainActivity` 在 `/session/` 路由吞掉方向键/Home/End/PgUp/PgDn/Tab → 视图事件 `onHardwareKey` → RN
 `useShellHardwareKeySend` 订阅 `session.tabs.subscribe` 取活动 tab 的 `terminal` handle →
 `sendTerminalLiveAccessoryRawBytes`（`terminalInputSend`）。注意 URL 的 session 段是
