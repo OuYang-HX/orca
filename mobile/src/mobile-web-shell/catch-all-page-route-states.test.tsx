@@ -101,7 +101,8 @@ vi.mock('../../modules/orca-mobile-web-shell/src', async () => {
   return {
     OrcaMobileWebShellView: (props: OrcaMobileWebShellViewProps) =>
       React.createElement('ShellViewProbe', props),
-    parseMobileWebShellLoadState: loadState.parseMobileWebShellLoadState
+    parseMobileWebShellLoadState: loadState.parseMobileWebShellLoadState,
+    setTerminalTabActive: () => {}
   }
 })
 vi.mock('../app-update/use-wall-app-update', () => ({
