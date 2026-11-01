@@ -4,24 +4,16 @@ import {
   type TerminalPaneViewport
 } from './mobile-terminal-pane-layout'
 import type { PendingSessionSelection } from './pending-session-selection'
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { Alert, type Keyboard, type TextInput } from 'react-native'
-import { hostOs } from '../platform/host-os'
 import type { TerminalFrame } from '../terminal/terminal-webview-messages'
 import { useFocusEffect } from 'expo-router'
 import type { RpcClient } from '../transport/rpc-client'
 import type { ConnectionState } from '../transport/types'
 import type { TerminalModes, TerminalWebViewHandle } from '../terminal/terminal-webview-contract'
 import { useTerminalLiveInputFocus } from '../terminal/use-terminal-live-input-focus'
+import { useMobileSessionHardwareKeys } from './use-mobile-session-hardware-keys'
 import { reopensFocusedInputWhenKeyboardHidden } from '../terminal/terminal-live-input-keyboard-reopen'
-import { scheduleTerminalLiveInputFocus } from '../terminal/terminal-live-input'
-import {
-  addTerminalHardwareKeyListener,
-  isTerminalHardwareKeyboardConnected,
-  setTerminalHardwareKeysEnabled,
-  setTerminalNavigationInterceptEnabled,
-  setTerminalSubmitInterceptEnabled
-} from '../terminal/terminal-hardware-keys'
 import type { TerminalLiveInputSender } from '../terminal/terminal-live-input-sender'
 import type { TerminalLiveInputFailure } from '../terminal/terminal-live-pending-flush-state'
 import { useTerminalLiveInputCommit } from '../terminal/use-terminal-live-input-commit'
@@ -191,112 +183,39 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
   const canCompose = inputGate.canCompose
   const canSend = inputGate.canSend && clientId !== null
   const liveInputEnabled = activeHandle ? liveInputTerminalHandles.has(activeHandle) : false
-  // Why: a buffered terminal has no focused capture field, so its arrows would
-  // fall through to Android focus navigation and hop between on-screen controls
-  // like Tab. The native gate still yields to a focused editor.
-  const terminalTabActive = activeSessionTab?.type === 'terminal'
-  // Why: Android native EditText consumes arrow/escape hardware keys before
-  // onKeyPress sees them; MainActivity forwards those keys here instead. The
-  // session route stays mounted while blurred, so the native flags must follow
-  // route focus — a stale `true` would swallow hardware keys app-wide.
-  useFocusEffect(
-    useCallback(() => {
-      if (hostOs() !== 'android') {
-        return
-      }
-      setTerminalHardwareKeysEnabled(liveInputEnabled && canSend && activeHandle !== null)
-      setTerminalNavigationInterceptEnabled(terminalTabActive && canSend && activeHandle !== null)
-      return () => {
-        setTerminalHardwareKeysEnabled(false)
-        setTerminalNavigationInterceptEnabled(false)
-      }
-    }, [activeHandle, canSend, liveInputEnabled, terminalTabActive])
-  )
-  // Why: submit keys must guard from route focus, not from connection readiness —
-  // an unfocused Enter during the connect window falls through to Android
-  // focus-search, which clicks whatever Pressable gains focus (session exit).
-  useFocusEffect(
-    useCallback(() => {
-      if (hostOs() === 'android') {
-        setTerminalSubmitInterceptEnabled(true)
-      }
-      return () => {
-        setTerminalSubmitInterceptEnabled(false)
-      }
-    }, [])
-  )
-  // Why: the subscription lifetime matches the session route, not reactive values.
-  const liveInputSubmitRef = useRef(handleLiveInputSubmit)
-  useEffect(() => {
-    liveInputSubmitRef.current = handleLiveInputSubmit
-  })
-  useEffect(() => {
-    return addTerminalHardwareKeyListener((bytes) => {
-      const handle = activeHandleRef.current
-      if (
-        !handle ||
-        connStateRef.current !== 'connected' ||
-        !liveInputTerminalHandlesRef.current.has(handle)
-      ) {
-        return
-      }
-      // Why: intercepted Enter only arrives unfocused (isMappedKeyEvent gate);
-      // route it through the submit path so any held field text flushes first,
-      // exactly like onSubmitEditing for the focused field.
-      if (bytes === '\r') {
-        void liveInputSubmitRef.current()
-        return
-      }
-      void sendLiveTerminalInputRef.current(handle, bytes)
-    })
-    // Why: the subscription lifetime matches the session route, not reactive values.
-  }, [])
-  const { focusLiveInput, handleCaptureBlur, handleTerminalTap, resetLiveInputFocus } = useTerminalLiveInputFocus({
+  useMobileSessionHardwareKeys({
+    activeHandle,
     activeHandleRef,
+    activeSessionTabType: activeSessionTab?.type,
     canSend,
-    commandInputRef,
-    inputRef: liveInputRef,
+    connStateRef,
     keyboardHeight,
-    lifecycleIdentity: client,
-    lifecycleKey: JSON.stringify([hostId, worktreeId, connState]),
     liveInputEnabled,
-    reopenFocusedInputWhenKeyboardHidden: reopensFocusedInputWhenKeyboardHidden(),
-    timerRef: liveInputFocusTimerRef
+    liveInputFocusTimerRef,
+    liveInputRef,
+    liveInputSubmit: handleLiveInputSubmit,
+    liveInputTerminalHandlesRef,
+    sendLiveTerminalInputRef
   })
+  const { focusLiveInput, handleCaptureBlur, handleTerminalTap, resetLiveInputFocus } =
+    useTerminalLiveInputFocus({
+      activeHandleRef,
+      canSend,
+      commandInputRef,
+      inputRef: liveInputRef,
+      keyboardHeight,
+      lifecycleIdentity: client,
+      lifecycleKey: JSON.stringify([hostId, worktreeId, connState]),
+      liveInputEnabled,
+      reopenFocusedInputWhenKeyboardHidden: reopensFocusedInputWhenKeyboardHidden(),
+      timerRef: liveInputFocusTimerRef
+    })
   useFocusEffect(
     useCallback(() => {
       // Expo retains this route while pushed screens are visible.
       return resetLiveInputFocus
     }, [resetLiveInputFocus])
   )
-  // Why: hardware-keyboard users expect the capture field to stay focused when
-  // they switch terminal tabs or workspaces; the keyboardHeight gate covers the
-  // soft keyboard already being up, and a connected typing keyboard covers the
-  // hardware case — its IME stays hidden either way. Touch phones without a
-  // keyboard never get an unprompted soft keyboard on tab activation.
-  const previousFocusHandleRef = useRef<string | null>(null)
-  useEffect(() => {
-    // Why: the assignment sits inside the branch — tab strip and connection
-    // settle AFTER the switch lands, and marking the handle as seen before the
-    // gate passes would swallow the retry when liveInputEnabled flips true.
-    if (
-      activeHandle === previousFocusHandleRef.current ||
-      !(keyboardHeight > 0 || isTerminalHardwareKeyboardConnected()) ||
-      !liveInputEnabled ||
-      !canSend
-    ) {
-      return
-    }
-    previousFocusHandleRef.current = activeHandle
-    scheduleTerminalLiveInputFocus(liveInputFocusTimerRef, () => liveInputRef.current?.focus())
-  }, [
-    activeHandle,
-    canSend,
-    keyboardHeight,
-    liveInputEnabled,
-    liveInputFocusTimerRef,
-    liveInputRef
-  ])
   return {
     ptyModesRef,
     terminalGestureInputBucketsRef,
