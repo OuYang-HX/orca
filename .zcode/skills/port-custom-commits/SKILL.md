@@ -20,7 +20,7 @@ description: 把 orca 个人仓的自定义提交移植到官方最新代码：�
 
 ## 自定义功能台账
 
-最近核对：2026-10-22，官方基线 `de7a2d24f9`，较旧基线 `dc146c09e2` 新增 1449 个提交
+最近核对：2026-11-01，官方基线 `e5b87cb8e61`，较旧基线 `de7a2d24f9` 新增 2944 个提交
 （其中 134 个触及 `mobile/`）。本代官方新增 `0cba9f2e08`（自带 woff2 字体资产 + 首绘门控），
 我们的字体补丁因此全部作废。
 旧分支备份：`backup/mobile-tablet-hardware-keyboard-20261022`（本地与 origin）。
@@ -146,7 +146,8 @@ Kotlin 单测 3 项、页面 sink 单测 4 项、mobile 全量 11176 项通过�
 生效条件：页面代码在桌面 web bundle 里（`out/mobile-web`，buildId `60ae182b…`，有进程级缓存）→ **必须
 重启桌面 Orca**，平板才会重新下载该 buildId 的 bundle；只装 APK 不改变行为。
 
-APK SHA-256（`oyhx.5` 现行）：`b28944af91b1073bdee4845c8da5e8804f7e71c76518f6fe015e3dad0da83d0f`。
+APK SHA-256（`oyhx.6` 现行）：`429d1ffa6c78df85e9d4fcc955b3f2ef8a2049a751a8bfb936b694abc82a6cec`。
+上一代 `oyhx.5`：`b28944af91b1073bdee4845c8da5e8804f7e71c76518f6fe015e3dad0da83d0f`（0.0.58 / code 24）。
 历史：`1637720e…`、`c345aa6e…`、`133f8fc8…`、`f2b2fe15…`、`517ac17f…`、`oyhx.4` `23a5f209…`（均已取代）。
 
 **方向键最终形态（`5a09790873`）**：Activity 只在「`/session/` 路由 + RN 报告当前 tab 是终端」时接管
