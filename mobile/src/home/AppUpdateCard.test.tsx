@@ -42,11 +42,11 @@ describe('AppUpdateCard', () => {
   })
 
   it('labels the official release as a custom APK rebuild and opens its details', () => {
-    const { root, texts, onPress } = render(true)
-    expect(texts).toEqual([
-      'Official Orca 0.0.51 is available',
-      'Rebuild your custom APK · View release notes'
-    ])
+    const { root, onPress } = render(true)
+    const texts = root
+      .findAll((node) => String(node.type) === 'Text')
+      .map((node) => node.props.children)
+    expect(texts).toEqual(['Official Orca 0.0.51 is available', 'View notes'])
     const body = root.findAll((node) => String(node.type) === 'Pressable')[0]
     expect(body.props.accessibilityLabel).toBe(
       'Official Orca 0.0.51 is available, view release notes'

@@ -113,7 +113,7 @@ describe('AppUpdateSettingsRows', () => {
       }
     })
     expect(texts).toEqual([
-      'Official Orca 0.0.53 · Rebuild custom APK',
+      'Official Orca 0.0.53',
       'Details',
       'Check official updates',
       'Never'

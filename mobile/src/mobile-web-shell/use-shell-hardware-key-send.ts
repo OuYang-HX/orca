@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { sendTerminalLiveAccessoryRawBytes } from '../terminal/terminal-live-accessory-raw-send'
+import { terminalInputSend } from '../terminal/mobile-terminal-operations'
 import { shellHardwareKeyBytes } from '../terminal/shell-hardware-key-bytes'
 import { useHostClient } from '../transport/host-client-hooks'
 import { setTerminalTabActive } from '../../modules/orca-mobile-web-shell/src'
@@ -53,6 +54,7 @@ export function useShellHardwareKeySend(
       }
       void sendTerminalLiveAccessoryRawBytes({
         client,
+        sendTerminalUserInput: terminalInputSend.request,
         targetHandle: terminal,
         activeHandle: terminal,
         activeSessionTabType: 'terminal',
