@@ -197,6 +197,21 @@ code 26 正好等于官方 0.0.61 的号，不能用来交自定义包。
 **验证边界**：页面来自桌面 host 下发的 mobile web bundle，本机桌面仍是旧基线构建，验的是旧页面；
 终端区的方向键 / ↑回填 / Ctrl+U 本轮未复验。
 
+**自动化页在手机上的可用前提（2026-11-02 结论）**：`/h/[hostId]/automations` 由
+`ae09815770c feat: Support automations in Orca Mobile (#31617)` 加入
+`config/scripts/mobile-web-page-routes.mjs`，不在任何已发布 tag（含 v1.4.245）内。
+桌面 bundle 的 `routes` 是构建期声明、打包进 asar 的 `out/mobile-web`，运行时无法补；
+因此平板装新壳 + 桌面跑发布版会命中 `page-route-unlisted`，`blockRemedy` 映射成
+`update-desktop`，界面显示兜底文案「已配对的桌面应用版本过旧」——**这句文案不代表协议号低**
+（两端 `RUNTIME_PROTOCOL_VERSION` 都是 3，mobile floor 是 2）。
+
+本机重建 `out/mobile-web` 可得到含该路由的 bundle（11 条路由，buildId `f152cf809a82f0fc`），
+但打不出可装桌面：electron-builder 的 `afterPack` 校验要求
+`out/main/skills/bundled-skill-install/**` 全 unpack，而仓库只 unpack `cli-entry.js`；
+本地 electron-vite 产物是多文件 chunk（`require("./local-host")`），官方发布产物是单文件薄壳。
+放宽 glob 后又会撞上 "bare runtime imports without copied node_modules"，说明是产物形态差异，
+不是配置写错。**决定：本机不再造桌面包，等官方发版后随正式桌面一起更新。**
+
 **已知遗留（下一轮优先）**：未聚焦 Enter 的 submit 门控只挂在原生会话屏
 （`use-mobile-session-hardware-keys`），web-shell 会话路由与 RN 首页都没有，按 Enter 会掉进
 Android focus-search 点中 Pressable（实测打开过浏览器）。
