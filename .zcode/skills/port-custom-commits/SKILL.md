@@ -173,6 +173,34 @@ undefined、加载的 64 个 chunk 只有 26 个与仓库产物重合。所以�
 `${repoId}::${path}`（worktree id），**不是** terminal handle，直接拿来发送会被 host 拒绝（实测
 `sent=false`）；改从快照取 `term_…` 后才 `sent=true`。
 
+## 2026-11-01 同步（基线 `e5b87cb8e61`，+2944 提交）与 code 27 交付
+
+覆盖审计判据全部为空（`git grep -l ... upstream/main -- mobile/`）：`dispatchKeyEvent`、`onKeyPreIme`、
+`WebShellTerminalKeyRouting`、`isHardwareKeyboardConnected`、`terminal-hwkeys` → 硬件键盘补丁保留。
+**被官方吸收的只有 Symbols Nerd Font**：上游自带 `TERMINAL_SYMBOLS_FONT_CSS` 与 woff2，
+`git log upstream/main..HEAD -- mobile/assets/fonts` 为空，这代零贡献。
+
+按上游新结构重写：dock 输入框先走 `dockKeys.interceptTypedCharacter`（粘滞修饰键）再进我们的
+`onChange`、保留 `onBlur={handleCaptureBlur}`；更新卡片/设置行改成 i18n + `ListRow`（新增
+`officialTitle|viewNotes|noNewerOfficial|checkOfficialUpdates|officialVersion|details`）；
+`use-mobile-session-terminal-runtime.ts` 增量顶破 300 行 → 门控/监听/切换后聚焦抽到
+`use-mobile-session-hardware-keys.ts`（含 5 例单测）。
+
+交付：0.0.61 / code **27** / 标签 oyhx.6，
+sha256 `c97d6a7af1b742e694fb111eccefb641afd71e250fb7e68d0c326525888df23e`，源码 `f46d7d08d27`。
+`app.json` 与 `android/app/build.gradle` 的 versionCode 必须同改（prebuild 产物不随 app.json 变）；
+code 26 正好等于官方 0.0.61 的号，不能用来交自定义包。
+
+验证：`tsc` 通过；550 文件 / 5242 用例全绿；`assembleRelease` 成功；设备上首页→台式机→侧栏→会话页
+可打开，会话页 composer 用物理键盘键入 `xq` 回车后消息被提交（字母与 Enter 到页面）。
+
+**验证边界**：页面来自桌面 host 下发的 mobile web bundle，本机桌面仍是旧基线构建，验的是旧页面；
+终端区的方向键 / ↑回填 / Ctrl+U 本轮未复验。
+
+**已知遗留（下一轮优先）**：未聚焦 Enter 的 submit 门控只挂在原生会话屏
+（`use-mobile-session-hardware-keys`），web-shell 会话路由与 RN 首页都没有，按 Enter 会掉进
+Android focus-search 点中 Pressable（实测打开过浏览器）。
+
 ## 退出条件
 
 台账中所有功能均被官方完全覆盖时，删除对应补丁；没有新增自定义需求就不新增实现。
