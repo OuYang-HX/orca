@@ -146,7 +146,7 @@ Kotlin 单测 3 项、页面 sink 单测 4 项、mobile 全量 11176 项通过�
 生效条件：页面代码在桌面 web bundle 里（`out/mobile-web`，buildId `60ae182b…`，有进程级缓存）→ **必须
 重启桌面 Orca**，平板才会重新下载该 buildId 的 bundle；只装 APK 不改变行为。
 
-APK SHA-256（`oyhx.6` 现行）：构建号 27 / 0.0.61，见下一节交付记录。
+APK SHA-256（`oyhx.6` 现行，code 27 / 0.0.61）：`c97d6a7af1b742e694fb111eccefb641afd71e250fb7e68d0c326525888df23e`。
 上一代 `oyhx.5`：`b28944af91b1073bdee4845c8da5e8804f7e71c76518f6fe015e3dad0da83d0f`（0.0.58 / code 24）。
 历史：`1637720e…`、`c345aa6e…`、`133f8fc8…`、`f2b2fe15…`、`517ac17f…`、`oyhx.4` `23a5f209…`（均已取代）。
 
