@@ -38,7 +38,7 @@
 | 平台门控                                               | 无                                                                                                   | 沿用官方 `hostOs()` 接口，不自建平台判断                                                     | —                                                              |
 | route-parity 等源码指纹测试                            | **已移除**                                                                                           | 官方已删除该类测试，不恢复已删文件、不保留旧重录提交                                         | 上游已无该测试                                                 |
 | 依赖锁文件                                             | 仅增插件直接依赖索引（`@expo/config-plugins`）                                                       | 其他依赖保持官方版本；**不用 `--lockfile-only` 重解**                                        | —                                                              |
-| Android 定制包版本与官方更新提醒                       | `mobile/app.json` 的版本/构建标签（当前 `0.0.64` / `oyhx.8` / versionCode 29）、首页与设置页重建说明 | 沿用官方更新来源与缓存；官方新版提醒后同步源码并保留定制重建                                 | 见 `gwf-release`                                               |
+| Android 定制包版本与官方更新提醒                       | `mobile/app.json` 的版本/构建标签（当前 `0.0.64` / `oyhx.9` / versionCode 30）、首页与设置页重建说明 | 沿用官方更新来源与缓存；官方新版提醒后同步源码并保留定制重建                                 | 见 `gwf-release`                                               |
 
 判定原则：**实现 + 资产/门控齐全**才算"官方覆盖"；只有符号名不算。
 
@@ -75,6 +75,10 @@
 
 ## 最近验证摘要
 
+- 2026-11-07：以生产源码 `4c681dc5a10`、官方基线 `c94caf66e0c` 干净构建 Android 0.0.64 / oyhx.9 / code 30（arm64）。
+  APK SHA-256：`ac7d4cf67ecf62527827bc25af9f0c36ac9458c501165f774e7b34fa8b3725ee`；
+  原生模块 release 单测 57 项通过，Android Debug 签名证书与 code 29 一致。
+  未安装或实机验证；WebShell 硬键路由仍未接通。本轮精简不是硬键功能修复，Web 页面修复需另行更新桌面 host 页面。
 - 2026-11-07：在 `c94caf66e0c` 基线上移除 Web 页面不可用的原生模块包装和 hook；
   Android 用户代理的模块级复现确认旧导入抛出 `Cannot find native module 'TerminalHwKeys'`，
   本轮同用户代理的 headless 会话页面回归通过，未在真机复现或验证。
