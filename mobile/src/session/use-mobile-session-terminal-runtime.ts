@@ -12,6 +12,7 @@ import type { RpcClient } from '../transport/rpc-client'
 import type { ConnectionState } from '../transport/types'
 import type { TerminalModes, TerminalWebViewHandle } from '../terminal/terminal-webview-contract'
 import { useTerminalLiveInputFocus } from '../terminal/use-terminal-live-input-focus'
+import { useMobileSessionHardwareKeys } from './use-mobile-session-hardware-keys'
 import { reopensFocusedInputWhenKeyboardHidden } from '../terminal/terminal-live-input-keyboard-reopen'
 import type { TerminalLiveInputSender } from '../terminal/terminal-live-input-sender'
 import type { TerminalLiveInputFailure } from '../terminal/terminal-live-pending-flush-state'
@@ -149,7 +150,20 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
   })
   const canCompose = inputGate.canCompose
   const canSend = inputGate.canSend && clientId !== null
-  const { handleTerminalTap, resetLiveInputFocus } = useTerminalLiveInputFocus({
+  useMobileSessionHardwareKeys({
+    activeHandle,
+    activeHandleRef,
+    activeSessionTabType: activeSessionTab?.type,
+    activeSessionTabTypeRef,
+    canSend,
+    connStateRef,
+    keyboardHeight,
+    liveInputFocusTimerRef,
+    liveInputRef,
+    liveInputSubmit: handleLiveInputSubmit,
+    sendLiveTerminalInputRef
+  })
+  const { handleCaptureBlur, handleTerminalTap, resetLiveInputFocus } = useTerminalLiveInputFocus({
     activeHandleRef,
     canSend,
     inputRef: liveInputRef,
@@ -227,6 +241,7 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
     sendLiveInputClick,
     canCompose,
     canSend,
+    handleCaptureBlur,
     handleTerminalTap,
     resetLiveInputFocus,
     terminalInventoryRecoveryScope,

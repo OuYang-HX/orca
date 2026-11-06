@@ -43,6 +43,9 @@ internal class OrcaMobileWebShellView(
   private val onLoadState by EventDispatcher<Map<String, Any>>()
   private val onBridgeMessage by EventDispatcher<Map<String, Any>>()
   private val onExternalNavigation by EventDispatcher<Map<String, Any>>()
+  // Why: the terminal's input channel lives in JS (the page is a web document), so the activity
+  // hands navigation keys here instead of trying to synthesise DOM events the page ignores.
+  private val onHardwareKey by EventDispatcher<Map<String, Any>>()
 
   private var generationDirectory = ""
   private var sessionId = ""
@@ -61,6 +64,24 @@ internal class OrcaMobileWebShellView(
 
   init {
     addView(webView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+    active = this
+  }
+
+  /**
+   * The shell on screen. MainActivity reads it to hand navigation keys to the page's terminal,
+   * because Android's WebView spends them on focus traversal before the page sees a keydown.
+   */
+  companion object {
+    @Volatile
+    @JvmField
+    var active: OrcaMobileWebShellView? = null
+  }
+
+  /** The WebView the routing dispatches into, and the route it is showing. */
+  internal fun webViewForKeys(): WebView? = webView
+
+  internal fun emitHardwareKey(keyCode: Int, control: Boolean = false) {
+    onHardwareKey(mapOf("keyCode" to keyCode, "control" to control))
   }
 
   fun setGenerationDirectory(value: String) {
@@ -188,6 +209,7 @@ internal class OrcaMobileWebShellView(
 
   /** Expo calls this once React Native is done with the view, and onRenderProcessGone calls it. */
   fun destroyWebView() {
+    if (active === this) active = null
     val view = webView ?: return
     removeBridgeListener()
     loadState.documentEnded()

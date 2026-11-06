@@ -1,7 +1,10 @@
 import { useCallback, useLayoutEffect, useRef, type RefObject } from 'react'
+import { hostOs } from '../platform/host-os'
 import {
+  beginTerminalLiveInputSuppressedBlur,
   clearTerminalLiveInputFocusTimer,
   focusTerminalLiveInputTarget,
+  isTerminalLiveInputBlurSuppressed,
   scheduleTerminalLiveInputFocus,
   type TerminalLiveInputFocusTarget,
   type TerminalLiveInputFocusTimerRef
@@ -24,6 +27,7 @@ type UseTerminalLiveInputFocusOptions<T extends TerminalLiveInputFocusTarget> =
 
 type TerminalLiveInputFocusHandlers = {
   readonly focusLiveInput: () => void
+  readonly handleCaptureBlur: () => void
   readonly handleTerminalTap: (handle: string) => void
   readonly resetLiveInputFocus: () => void
 }
@@ -48,9 +52,36 @@ export function useTerminalLiveInputFocus<T extends TerminalLiveInputFocusTarget
   }, [canSend, keyboardHeight, reopenFocusedInputWhenKeyboardHidden])
 
   const resetLiveInputFocus = useCallback(() => {
+    beginTerminalLiveInputSuppressedBlur()
     clearTerminalLiveInputFocusTimer(timerRef)
     inputRef.current?.blur()
   }, [inputRef, timerRef])
+
+  // Why: the blur-refocus keeps Android hardware-keyboard typing alive across
+  // stray taps. On iOS a refocus re-opens the soft keyboard the user just
+  // swiped away, so the refocus never runs there.
+  const handleCaptureBlur = useCallback(() => {
+    if (hostOs() !== 'android') {
+      return
+    }
+    if (isTerminalLiveInputBlurSuppressed()) {
+      return
+    }
+    const context = contextRef.current
+    if (!context.canSend) {
+      return
+    }
+    scheduleTerminalLiveInputFocus(timerRef, () => {
+      if (isTerminalLiveInputBlurSuppressed()) {
+        return
+      }
+      const current = contextRef.current
+      if (!current.canSend || activeHandleRef.current === null) {
+        return
+      }
+      inputRef.current?.focus()
+    })
+  }, [activeHandleRef, inputRef, timerRef])
 
   // Retained Expo routes must not carry focus work across navigation or reconnect scopes.
   useLayoutEffect(() => resetLiveInputFocus, [lifecycleIdentity, lifecycleKey, resetLiveInputFocus])
@@ -83,5 +114,5 @@ export function useTerminalLiveInputFocus<T extends TerminalLiveInputFocusTarget
     [activeHandleRef, focusLiveInput, timerRef]
   )
 
-  return { focusLiveInput, handleTerminalTap, resetLiveInputFocus }
+  return { focusLiveInput, handleCaptureBlur, handleTerminalTap, resetLiveInputFocus }
 }

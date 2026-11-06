@@ -38,7 +38,7 @@ class OrcaMobileWebShellModule : Module() {
     }
 
     View(OrcaMobileWebShellView::class) {
-      Events("onLoadState", "onBridgeMessage", "onExternalNavigation")
+      Events("onLoadState", "onBridgeMessage", "onExternalNavigation", "onHardwareKey")
 
       Prop("generationDirectory") { view: OrcaMobileWebShellView, value: String ->
         view.setGenerationDirectory(value)
@@ -63,6 +63,12 @@ class OrcaMobileWebShellModule : Module() {
       OnViewDestroys { view: OrcaMobileWebShellView ->
         view.destroyWebView()
       }
+    }
+
+    // Why: only a terminal tab can take an arrow. React Native reads the host's tab snapshot and
+    // says so here, so the activity keeps the key for the page on every other tab.
+    Function("setTerminalTabActive") { active: Boolean ->
+      WebShellTerminalKeyRouting.setTerminalTabActive(active)
     }
   }
 }

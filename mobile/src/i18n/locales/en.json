@@ -39,7 +39,11 @@
       "update": "Update",
       "installedVersion": "Version {{version}}",
       "checkUpdatesStatus": "Check for updates, {{status}}",
-      "checkUpdates": "Check for updates"
+      "checkUpdates": "Check for updates",
+      "noNewerOfficial": "No newer official release",
+      "checkOfficialUpdates": "Check official updates",
+      "officialVersion": "Official Orca {{version}}",
+      "details": "Details"
     },
     "browserSettingsScreen": {
       "desktopBrowser": "Orca browser on desktop",
@@ -507,7 +511,10 @@
       "title": "Orca {{version}} is available",
       "updateAccessibilityLabel": "Orca {{version}} is available, tap to update",
       "dismissAccessibilityLabel": "Dismiss Orca {{version}} update",
-      "update": "Update"
+      "update": "Update",
+      "officialTitle": "Official Orca {{version}} is available",
+      "viewNotes": "View notes",
+      "officialAccessibilityLabel": "Official Orca {{version}} is available, view release notes"
     },
     "emptyState": {
       "openDesktopTitle": "Open Orca desktop",

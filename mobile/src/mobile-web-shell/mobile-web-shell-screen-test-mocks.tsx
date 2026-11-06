@@ -160,7 +160,10 @@ export function screenModuleMocks(dependencies: ScreenDependencies) {
           }, [attach])
           return React.createElement('ShellViewProbe', props)
         },
-        parseMobileWebShellLoadState: parseMobileWebShellLoadState
+        parseMobileWebShellLoadState: parseMobileWebShellLoadState,
+        // The hardware-key sender gates the activity on which tab is showing; the stub keeps that
+        // gate inert, which is the only thing a screen test can observe.
+        setTerminalTabActive: () => {}
       }
     },
     '../app-update/use-wall-app-update': () => ({ useWallAppUpdate: () => null }),

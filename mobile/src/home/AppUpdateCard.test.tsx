@@ -18,11 +18,13 @@ describe('AppUpdateCard', () => {
     renderer = null
   })
 
-  function render() {
+  function render(requiresCustomBuild = false) {
     const onPress = vi.fn()
     const onDismiss = vi.fn()
     act(() => {
-      renderer = create(createElement(AppUpdateCard, { version: '0.0.51', onPress, onDismiss }))
+      renderer = create(
+        createElement(AppUpdateCard, { version: '0.0.51', requiresCustomBuild, onPress, onDismiss })
+      )
     })
     const root = renderer!.root
     return { root, onPress, onDismiss }
@@ -37,5 +39,19 @@ describe('AppUpdateCard', () => {
     expect(onDismiss).not.toHaveBeenCalled()
     act(() => dismiss.props.onPress())
     expect(onDismiss).toHaveBeenCalledTimes(1)
+  })
+
+  it('labels the official release as a custom APK rebuild and opens its details', () => {
+    const { root, onPress } = render(true)
+    const texts = root
+      .findAll((node) => String(node.type) === 'Text')
+      .map((node) => node.props.children)
+    expect(texts).toEqual(['Official Orca 0.0.51 is available', 'View notes'])
+    const body = root.findAll((node) => String(node.type) === 'Pressable')[0]
+    expect(body.props.accessibilityLabel).toBe(
+      'Official Orca 0.0.51 is available, view release notes'
+    )
+    act(() => body.props.onPress())
+    expect(onPress).toHaveBeenCalledTimes(1)
   })
 })

@@ -70,6 +70,7 @@ function checkRowValue(
 
 export function AppUpdateSettingsRows(props: {
   installedVersion: string | null
+  requiresCustomBuild?: boolean
   available: KnownAppUpdate | null
   lastCheckedAt: number | null
   now: number
@@ -79,17 +80,31 @@ export function AppUpdateSettingsRows(props: {
 }) {
   const t = useMobileTranslation()
   useMobileColorScheme()
-  const checkValue = checkRowValue(t, props.checkStatus, props.lastCheckedAt, props.now)
+  const checkValue =
+    props.requiresCustomBuild && props.checkStatus === 'up-to-date'
+      ? t('settings.appUpdateSettingsRows.noNewerOfficial', 'No newer official release')
+      : checkRowValue(t, props.checkStatus, props.lastCheckedAt, props.now)
+  const checkLabel = props.requiresCustomBuild
+    ? t('settings.appUpdateSettingsRows.checkOfficialUpdates', 'Check official updates')
+    : t('settings.appUpdateSettingsRows.checkUpdates', 'Check for updates')
   const { available, installedVersion, onUpdate } = props
   const versionRow = available ? (
     <ListRow
       key="version"
-      title={t('settings.appUpdateSettingsRows.updateToVersion', 'Update to Orca {{version}}', {
-        version: available.version
-      })}
+      title={
+        props.requiresCustomBuild
+          ? t('settings.appUpdateSettingsRows.officialVersion', 'Official Orca {{version}}', {
+              version: available.version
+            })
+          : t('settings.appUpdateSettingsRows.updateToVersion', 'Update to Orca {{version}}', {
+              version: available.version
+            })
+      }
       accessory={
         <Text style={styles.actionValue}>
-          {t('settings.appUpdateSettingsRows.update', 'Update')}
+          {props.requiresCustomBuild
+            ? t('settings.appUpdateSettingsRows.details', 'Details')
+            : t('settings.appUpdateSettingsRows.update', 'Update')}
         </Text>
       }
       onPress={() => onUpdate(available.url)}
@@ -107,14 +122,12 @@ export function AppUpdateSettingsRows(props: {
       {versionRow}
       <ListRow
         key="check"
-        title={t('settings.appUpdateSettingsRows.checkUpdates', 'Check for updates')}
+        title={checkLabel}
         value={checkValue}
         accessibilityLabel={t(
           'settings.appUpdateSettingsRows.checkUpdatesStatus',
           'Check for updates, {{status}}',
-          {
-            status: checkValue
-          }
+          { status: checkValue }
         )}
         busy={props.checkStatus === 'checking'}
         onPress={props.onCheck}

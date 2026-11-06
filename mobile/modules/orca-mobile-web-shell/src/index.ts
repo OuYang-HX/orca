@@ -1,7 +1,21 @@
+import { Platform } from 'react-native'
 import { requireNativeModule, requireNativeViewManager } from 'expo-modules-core'
 import type { ComponentType, RefAttributes } from 'react'
 import type { NativeSyntheticEvent, ViewProps } from 'react-native'
 import type { MobileWebShellLoadStatePayload } from './load-state'
+
+const shellModule =
+  Platform.OS === 'web'
+    ? null
+    : requireNativeModule<{ setTerminalTabActive(active: boolean): void }>('OrcaMobileWebShell')
+
+/**
+ * Tells the shell whether the session is showing a terminal tab. Only then does the activity take
+ * navigation keys from the WebView: every other tab keeps them for the page.
+ */
+export function setTerminalTabActive(active: boolean): void {
+  shellModule?.setTerminalTabActive(active)
+}
 
 /** One raw JSON envelope, exactly as the page posted it. Parsing is the caller's. */
 export type MobileWebShellBridgeMessagePayload = { json: string }
@@ -27,6 +41,12 @@ export type OrcaMobileWebShellViewProps = ViewProps & {
   // iOS only: a left-edge swipe fires onBackEdgeSwipe instead of reaching the page. Android has the hardware key.
   backEdgeSwipe?: boolean
   onBackEdgeSwipe?: () => void
+  /**
+   * A hardware navigation key the activity took from the WebView before its focus traversal could.
+   * The shell hands it to JS because the page is a web document whose terminal never sees those
+   * keys. Only a session route emits, and only on ACTION_DOWN.
+   */
+  onHardwareKey?: (event: NativeSyntheticEvent<{ keyCode: number; control?: boolean }>) => void
 }
 
 /** What a ref on the view carries. Expo puts the view's functions on the component prototype. */

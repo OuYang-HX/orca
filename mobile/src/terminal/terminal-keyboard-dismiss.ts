@@ -1,3 +1,5 @@
+import { beginTerminalLiveInputSuppressedBlur } from './terminal-live-input'
+
 export type TerminalKeyboardDismissHandle = { blur: () => void } | null | undefined
 
 export type DismissTerminalKeyboardOptions = {
@@ -9,6 +11,7 @@ export type DismissTerminalKeyboardOptions = {
 export function dismissTerminalKeyboard(options: DismissTerminalKeyboardOptions): void {
   // Clear deferred live focus before dismissing or it can immediately reopen the iOS keyboard.
   options.clearPendingLiveInputFocus()
+  beginTerminalLiveInputSuppressedBlur()
   options.liveInput?.blur()
   options.dismissKeyboard()
 }

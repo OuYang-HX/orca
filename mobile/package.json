@@ -80,6 +80,7 @@
     "zod": "~4.6.7"
   },
   "devDependencies": {
+    "@expo/config-plugins": "55.0.11",
     "@orca/process-host": "link:../src/packages/process-host",
     "@types/markdown-it": "14.1.2",
     "@types/markdown-it-footnote": "^3.0.4",

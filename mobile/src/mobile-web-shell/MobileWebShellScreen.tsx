@@ -19,6 +19,7 @@ import { ShellDevFacts } from './ShellDevFacts'
 import { cancelledShellNavigationTarget } from './cancelled-navigation-target'
 import { playPageHaptic } from './page-haptics'
 import { useMobileWebShellBridge } from './use-mobile-web-shell-bridge'
+import { useShellHardwareKeySend } from './use-shell-hardware-key-send'
 import type { MobileWebShellRuntime } from './mobile-web-shell-runtime'
 import { useKeyboardOcclusion } from '../platform/keyboard-occlusion'
 import { useNativeDeviceVerbs } from '../platform/use-native-device-verbs'
@@ -186,6 +187,7 @@ export function MobileWebShellScreen({
     openPageRoute
   )
 
+  const sendHardwareKey = useShellHardwareKeySend(hostId, route.pathname)
   const bridge = useMobileWebShellBridge({
     hostId,
     hostStatus,
@@ -328,6 +330,9 @@ export function MobileWebShellScreen({
         onBridgeMessage={bridge.onBridgeMessage}
         backEdgeSwipe={backClaimed}
         onBackEdgeSwipe={bridge.sendBack}
+        onHardwareKey={(event) =>
+          sendHardwareKey(event.nativeEvent.keyCode, event.nativeEvent.control === true)
+        }
         onExternalNavigation={(event) => {
           const target = cancelledShellNavigationTarget(event.nativeEvent.url)
           if (target === null) {

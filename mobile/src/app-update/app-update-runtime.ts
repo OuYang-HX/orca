@@ -14,6 +14,12 @@ import { githubReleaseUpdateSource } from './github-release-update-source'
 
 // expoConfig is embedded binary manifest because app does not use expo-updates; SDK 55 removed nativeAppVersion. Revisit version source if adopting OTA updates.
 export const installedAppVersion: string | null = Constants.expoConfig?.version ?? null
+const buildLabel = Platform.OS === 'android' ? Constants.expoConfig?.extra?.androidBuildLabel : null
+export const requiresCustomBuild = typeof buildLabel === 'string' && buildLabel.length > 0
+export const installedAppVersionLabel =
+  installedAppVersion && typeof buildLabel === 'string' && buildLabel
+    ? `${installedAppVersion} (${buildLabel})`
+    : installedAppVersion
 
 /** The channel that installed this binary. */
 function resolveAppUpdateSource(): AppUpdateSource | null {

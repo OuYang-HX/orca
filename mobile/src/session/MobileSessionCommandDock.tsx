@@ -31,6 +31,7 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
     liveInputRef,
     submitLiveInput,
     canSend,
+    handleCaptureBlur,
     dictation,
     liveDictationText,
     dockKeys,
@@ -90,6 +91,7 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
               handleLiveInputChange(event)
             }
           }}
+          onBlur={handleCaptureBlur}
           onKeyPress={handleLiveInputKeyPress}
           onSubmitEditing={submitLiveInput}
           placeholder={t('session.commandDock.tapToShowKeyboard', 'Tap to show keyboard')}
