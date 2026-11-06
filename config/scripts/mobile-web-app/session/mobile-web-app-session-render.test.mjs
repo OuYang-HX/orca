@@ -82,8 +82,8 @@ afterAll(async () => {
   }
 })
 
-async function openPage(route, replies = {}, { domStorageOff = false } = {}) {
-  const page = await browser.newPage({ viewport: { width: 390, height: 844 } })
+async function openPage(route, replies = {}, { domStorageOff = false, userAgent } = {}) {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 }, userAgent })
   if (domStorageOff) {
     // Match Android WebView storage-off behavior: localStorage is null, not undefined; import-time push storage reads once threw getItem here.
     await page.addInitScript(() => {
@@ -202,6 +202,20 @@ describeRender(
       // Null-storage arm reproduces Android import-time expo-notifications failure; shell owns push and pages must not load it.
       const opened = await openRoute(SESSION_ROUTE, 'Terminal', {}, { domStorageOff: true })
       // Require all errors absent; filtering known push failure could hide other illegal storage users.
+      expect(opened.errors).toEqual([])
+      await opened.page.close()
+    }, 120_000)
+
+    it('loads the session route with an Android user agent', async () => {
+      const opened = await openRoute(
+        SESSION_ROUTE,
+        'Esc',
+        {},
+        {
+          userAgent:
+            'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36'
+        }
+      )
       expect(opened.errors).toEqual([])
       await opened.page.close()
     }, 120_000)

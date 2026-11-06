@@ -23,22 +23,22 @@
 
 最近核对：2026-11-06，官方基线 `c94caf66e0c`，较旧基线 `1783cf58b19` 新增 740 个提交。
 官方将 Android 版本升至 0.0.64 / versionCode 28，并在 `8a4dd3a7bb9` 改为单一实时输入；
-键盘门控、切换后聚焦和失焦恢复已接入该结构，官方的双模式输入删除保持不变。
+官方的双模式输入删除保持不变；当前 WebShell 硬键路径尚未接通。
 分支备份：`backup/mobile-tablet-hardware-keyboard-20261106-130105`（本地）。
 
-| 功能                                                   | 当前增量                                                                                             | 官方覆盖情况与处置                                                                           | 判据                                                                        |
-| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| Android 硬件方向键、ESC、Tab、翻页、Home/End、Ctrl/Alt | 原生模块、MainActivity prebuild 插件、JS 事件接入                                                    | 官方未实现，保留                                                                             | `git grep -l 'dispatchKeyEvent\|onKeyPreIme' upstream/main -- mobile/` 为空 |
-| 未聚焦 Enter/NumpadEnter/DPAD_CENTER                   | 原生 EditText 焦点判定、路由焦点门控、JS submit 接入                                                 | 官方未覆盖，保留（防 Android 焦点搜索误点离开会话）                                          | 同上 + `KEYCODE_DPAD_CENTER`                                                |
-| 硬键盘探测与切标签/工作区后聚焦                        | 原生设备探测、成功门控后记录 handle、官方聚焦调度器                                                  | 官方未覆盖，保留                                                                             | `git grep -l 'isHardwareKeyboardConnected' upstream/main -- mobile/`        |
-| 防止自然失焦打断硬键盘输入                             | 官方聚焦 hook 的 Android blur 接入、主动关闭时短暂抑制                                               | 官方未覆盖，保留（iOS 不自动重开键盘）                                                       | 同上                                                                        |
-| xterm / addon 升级与 esbuild 钉版                      | **已移除**                                                                                           | 官方已升 `@xterm/xterm` 6.1.0-beta.336，无需自钉                                             | `git grep '@xterm/xterm' upstream/main -- mobile/package.json`              |
-| colorSchemeQuery 关闭                                  | `terminal-init.ts` 的 vtExtensions 选项                                                              | 官方仍会答复颜色查询，保留（避免远程延迟回复回显）                                           | 上游 `terminal-init.ts` 无该开关                                            |
-| Nerd Font 图标与首次绘制等待                           | **已全部删除**（TTF、base64 模块、@font-face、帧门控提交）                                           | **官方已覆盖**：`0cba9f2e08` 自带 woff2 + `terminal-nerd-font-css` + message-bridge 首绘门控 | 上游含 `TERMINAL_SYMBOLS_FONT_CSS`                                          |
-| 平台门控                                               | 无                                                                                                   | 沿用官方 `hostOs()` 接口，不自建平台判断                                                     | —                                                                           |
-| route-parity 等源码指纹测试                            | **已移除**                                                                                           | 官方已删除该类测试，不恢复已删文件、不保留旧重录提交                                         | 上游已无该测试                                                              |
-| 依赖锁文件                                             | 仅增插件直接依赖索引（`@expo/config-plugins`）                                                       | 其他依赖保持官方版本；**不用 `--lockfile-only` 重解**                                        | —                                                                           |
-| Android 定制包版本与官方更新提醒                       | `mobile/app.json` 的版本/构建标签（当前 `0.0.64` / `oyhx.8` / versionCode 29）、首页与设置页重建说明 | 沿用官方更新来源与缓存；官方新版提醒后同步源码并保留定制重建                                 | 见 `gwf-release`                                                            |
+| 功能                                                   | 当前增量                                                                                             | 官方覆盖情况与处置                                                                           | 判据                                                           |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Android 硬件方向键、ESC、Tab、翻页、Home/End、Ctrl/Alt | 原生映射和 WebShell 路由保留                                                                         | 官方未实现；WebShell 路由无调用方，尚未生效                                                  | `git grep 'WebShellTerminalKeyRouting.dispatch'` 为空          |
+| 未聚焦 Enter/NumpadEnter/DPAD_CENTER                   | 原生按键编码保留                                                                                     | 官方未覆盖；门控未接入 WebShell，行为待实现和验证                                            | `TerminalHwKeysModule.kt` 的 `isSubmitKey`                     |
+| 硬键盘探测与切标签/工作区后聚焦                        | 原生设备探测保留                                                                                     | 官方无等价探测；无效的页面 hook 已移除，后续需接入及设备验证                                 | `TerminalHwKeysModule.kt` 的 `isHardwareKeyboardConnected`     |
+| 防止自然失焦打断硬键盘输入                             | 官方聚焦 hook 的 Android blur 接入、主动关闭时短暂抑制                                               | 官方未覆盖，保留（iOS 不自动重开键盘）                                                       | 同上                                                           |
+| xterm / addon 升级与 esbuild 钉版                      | **已移除**                                                                                           | 官方已升 `@xterm/xterm` 6.1.0-beta.336，无需自钉                                             | `git grep '@xterm/xterm' upstream/main -- mobile/package.json` |
+| colorSchemeQuery 关闭                                  | `terminal-init.ts` 的 vtExtensions 选项                                                              | 官方仍会答复颜色查询，保留（避免远程延迟回复回显）                                           | 上游 `terminal-init.ts` 无该开关                               |
+| Nerd Font 图标与首次绘制等待                           | **已全部删除**（TTF、base64 模块、@font-face、帧门控提交）                                           | **官方已覆盖**：`0cba9f2e08` 自带 woff2 + `terminal-nerd-font-css` + message-bridge 首绘门控 | 上游含 `TERMINAL_SYMBOLS_FONT_CSS`                             |
+| 平台门控                                               | 无                                                                                                   | 沿用官方 `hostOs()` 接口，不自建平台判断                                                     | —                                                              |
+| route-parity 等源码指纹测试                            | **已移除**                                                                                           | 官方已删除该类测试，不恢复已删文件、不保留旧重录提交                                         | 上游已无该测试                                                 |
+| 依赖锁文件                                             | 仅增插件直接依赖索引（`@expo/config-plugins`）                                                       | 其他依赖保持官方版本；**不用 `--lockfile-only` 重解**                                        | —                                                              |
+| Android 定制包版本与官方更新提醒                       | `mobile/app.json` 的版本/构建标签（当前 `0.0.64` / `oyhx.8` / versionCode 29）、首页与设置页重建说明 | 沿用官方更新来源与缓存；官方新版提醒后同步源码并保留定制重建                                 | 见 `gwf-release`                                               |
 
 判定原则：**实现 + 资产/门控齐全**才算"官方覆盖"；只有符号名不算。
 
@@ -75,6 +75,14 @@
 
 ## 最近验证摘要
 
+- 2026-11-07：在 `c94caf66e0c` 基线上移除 Web 页面不可用的原生模块包装和 hook；
+  Android 用户代理的模块级复现确认旧导入抛出 `Cannot find native module 'TerminalHwKeys'`，
+  本轮同用户代理的 headless 会话页面回归通过，未在真机复现或验证。
+  移除前后，相对基线生产及构建差异从 +943/-38 降至 +728/-38，测试从 +960/-3 变为 +825/-5。
+  全部定制差异从 45 文件 +2001/-42 变为 43 文件 +1659/-44。
+  根和 mobile 类型检查、mobile 测试类型检查、聚焦定向测试、变更质量门及格式检查均通过。
+  原生会话路由不使用该 hook；移除不代表完成硬键接入。WebShell 硬键分发、焦点与 IME 边界仍待实现和验证。
+  官方 `9519bf6fe32` 尚未纳入，本地备份 `backup/mobile-custom-optimize-20261107-011852`。
 - 2026-11-06：基线 `c94caf66e0c`（+740 提交），保留硬件键、WebView 路由、焦点恢复、颜色查询与官方更新提醒；
   适配官方单一实时输入，干净 prebuild 后 arm64 release APK / code 29 构建及两个原生模块 release 单测通过。
   APK SHA-256：`e29add4d9567cf87c57b4b3cdb9047f0fb8f85202018c12405eb709feea59acf`。
